@@ -1,0 +1,163 @@
+/* Biến màu (giúp dễ thay đổi) */
+:root {
+    --primary-color: #A67B5B; /* Màu nâu ấm */
+    --text-color: #333;
+    --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #f9f9f9;
+}
+
+header {
+    background: #fff;
+    padding: 10px 5%;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    color: var(--primary-color);
+    margin: 0;
+}
+
+header nav a {
+    margin: 0 10px;
+    text-decoration: none;
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+main {
+    width: 90%;
+    max-width: 1200px;
+    margin: 20px auto;
+}
+
+/* Bố cục lưới cho sản phẩm */
+.product-grid {
+    display: grid;
+    /* Tự động điều chỉnh số cột */
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+/* Thẻ sản phẩm (Product Card) */
+.product-card {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.2s;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+}
+
+.product-image {
+    width: 100%;
+    /* Đảm bảo ảnh có tỷ lệ 1:1 (vuông) */
+    aspect-ratio: 1 / 1; 
+    object-fit: cover; /* Giữ tỷ lệ ảnh */
+}
+
+.product-info {
+    padding: 15px;
+}
+
+.product-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 5px 0;
+}
+
+.product-shop {
+    font-size: 0.9rem;
+    color: #777;
+    margin: 0 0 10px 0;
+}
+
+.current-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+/* ======================== */
+/* CSS THÊM VÀO CHO FORM */
+/* ======================== */
+
+.logo-link {
+    text-decoration: none;
+    color: var(--primary-color);
+}
+
+.form-container {
+    max-width: 450px;
+    margin: 30px auto;
+    padding: 30px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+}
+
+.form-container h2 {
+    text-align: center;
+    color: var(--primary-color);
+    margin-top: 0;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+/* Dùng chung cho input (text, email, password) và select 
+*/
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box; /* Quan trọng để padding không làm vỡ layout */
+    font-size: 1rem;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 15px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.submit-btn:hover {
+    background-color: #8a6a4f; /* Màu đậm hơn */
+}
+
+/* Dùng để hiển thị thông báo lỗi/thành công */
+#message {
+    text-align: center;
+    margin-top: 15px;
+    font-weight: 600;
+}
+
+.form-link {
+    text-align: center;
+    margin-top: 20px;
+}

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kênh Bán Hàng - HandCraft Market</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1><a href="index.html" class="logo-link">HandCraft Market</a></h1>
+        <nav>
+            </nav>
+    </header>
+
+    <main class="form-container">
+        <h2>Đăng sản phẩm mới</h2>
+        
+        <form id="product-form">
+            <div class="form-group">
+                <label for="name">Tên sản phẩm:</label>
+                <input type="text" id="name" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Mô tả:</label>
+                <textarea id="description" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="price">Giá (VNĐ):</label>
+                <input type="number" id="price" required>
+            </div>
+            <div class="form-group">
+                <label for="stock_quantity">Số lượng tồn kho:</label>
+                <input type="number" id="stock_quantity" value="1" required>
+            </div>
+            <div class="form-group">
+                <label for="category_id">Danh mục:</label>
+                <input type="number" id="category_id" placeholder="Nhập ID danh mục (ví dụ: 1)" required>
+            </div>
+            
+            <button type="submit" class="submit-btn">Đăng bán</button>
+            
+            <p id="message"></p>
+        </form>
+    </main>
+
+    <script src="vendor.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
