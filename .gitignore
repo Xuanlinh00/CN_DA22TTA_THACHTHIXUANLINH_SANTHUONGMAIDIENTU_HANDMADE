@@ -1,5 +1,0 @@
-# Bỏ qua thư mục node_modules của Back-end
-/backend/node_modules
-
-# Bỏ qua các file log
-*.log
