@@ -39,4 +39,17 @@ const vendor = (req, res, next) => {
     }
 };
 
-module.exports = { protect, vendor };
+// === THÊM MIDDLEWARE MỚI CHO ADMIN (THEO ĐỀ CƯƠNG) ===
+// Middleware 3: Kiểm tra vai trò (Có phải Admin không?)
+const admin = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+        next(); // Là admin, cho phép đi tiếp
+    } else {
+        res.status(403); // 403 = Forbidden
+        res.json({ message: 'Không phải là Admin, không có quyền truy cập' });
+    }
+};
+// ===================================================
+
+// Cập nhật module.exports để export cả 3 hàm
+module.exports = { protect, vendor, admin };

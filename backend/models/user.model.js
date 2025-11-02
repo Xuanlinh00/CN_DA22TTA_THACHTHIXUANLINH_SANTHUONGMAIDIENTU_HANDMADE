@@ -20,7 +20,9 @@ const userSchema = new mongoose.Schema(
         role: {
             type: String,
             required: true,
-            enum: ['customer', 'vendor'], // Chỉ chấp nhận 1 trong 2 giá trị
+            // === CẬP NHẬT THEO ĐỀ CƯƠNG MỚI ===
+            enum: ['customer', 'vendor', 'admin'], // Hỗ trợ 3 vai trò
+            // ===================================
             default: 'customer',
         },
     },

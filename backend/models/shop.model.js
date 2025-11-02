@@ -22,6 +22,13 @@ const shopSchema = new mongoose.Schema(
             type: String,
             default: '/images/default-shop.png', // Ảnh đại diện mặc định
         },
+        // === THÊM TRƯỜNG MỚI THEO ĐỀ CƯƠNG ===
+        status: {
+            type: String,
+            enum: ['pending', 'active', 'rejected'],
+            default: 'pending', // Mặc định là 'chờ duyệt'
+        },
+        // ===================================
     },
     {
         timestamps: true,

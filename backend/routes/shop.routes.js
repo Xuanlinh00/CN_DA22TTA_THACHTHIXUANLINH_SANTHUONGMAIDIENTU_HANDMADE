@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { createShop } = require('../controllers/shop.controller.js');
-const { protect, vendor } = require('../middleware/auth.middleware.js'); // Import 2 "người gác cổng"
+// CHỈ CẦN IMPORT 'protect'
+const { protect } = require('../middleware/auth.middleware.js'); 
 
 // Định nghĩa đường dẫn POST /api/shops
-// Để gọi được API này, user phải:
+// Để gọi được API này, user chỉ cần:
 // 1. Đi qua 'protect' (Đã đăng nhập, có token hợp lệ)
-// 2. Đi qua 'vendor' (Có role là 'vendor')
-router.post('/', protect, vendor, createShop);
+router.post('/', protect, createShop);
 
 module.exports = router;

@@ -5,8 +5,8 @@ const generateToken = require('../utils/generateToken.js');
 // @route   POST /api/users/register
 // @access  Public
 const registerUser = async (req, res) => {
-    // 1. Lấy thông tin từ request
-    const { name, email, password, role } = req.body;
+    // 1. Lấy thông tin từ request (BỎ 'role' ra, user không được tự chọn)
+    const { name, email, password } = req.body;
 
     try {
         // 2. Kiểm tra xem email đã tồn tại chưa
@@ -17,13 +17,25 @@ const registerUser = async (req, res) => {
             throw new Error('Email đã được sử dụng');
         }
 
+        // --- LOGIC MỚI CHO 3 VAI TRÒ (THEO ĐỀ CƯƠNG) ---
+        // Tự động gán vai trò dựa trên email
+        let role = 'customer'; // Mặc định là customer
+        
+        // Giả sử email admin đặc biệt, chỉ có 1
+        // (Bạn có thể thay đổi email này trong file .env sau)
+        if (email === 'admin@gmail.com') { 
+            role = 'admin';
+        }
+        // (Vai trò 'vendor' sẽ được gán sau khi họ tạo shop)
+        // ----------------------------------------------
+
         // 3. Nếu chưa tồn tại, tạo user mới
         // (Mật khẩu sẽ tự động được mã hóa nhờ 'pre.save' trong Model)
         const user = await User.create({
             name,
             email,
             password,
-            role,
+            role, // Gán vai trò đã được kiểm soát
         });
 
         // 4. Nếu tạo thành công, tạo Token và gửi về cookie
