@@ -4,15 +4,24 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
+
+// Import tất cả các file routes
 const userRoutes = require('./routes/user.routes.js');
 const shopRoutes = require('./routes/shop.routes.js');
 const adminRoutes = require('./routes/admin.routes.js');
+const productRoutes = require('./routes/product.routes.js');
+const categoryRoutes = require('./routes/category.routes.js');
 
 // 2. Cấu hình
 dotenv.config(); // Đọc file .env
 const app = express(); // Tạo app Express
 app.use(cors()); // Cho phép React gọi API
+
+// === DÒNG QUAN TRỌNG NHẤT LÀ ĐÂY ===
+// Phải đặt TRƯỚC các dòng app.use routes
 app.use(express.json()); // Giúp server đọc hiểu dữ liệu JSON gửi lên
+// ===================================
+
 app.use(cookieParser()); // Giúp server đọc cookie (cho JWT)
 
 // 3. Lấy thông tin từ file .env
@@ -34,17 +43,13 @@ mongoose.connect(MONGO_URI)
     });
 
 // 6. Routes
-// Route (đường dẫn) API đầu tiên để kiểm tra
 app.get('/', (req, res) => {
     res.send('Chào mừng đến với Back-end Sàn Handmade!');
 });
 
-// KÍCH HOẠT USER ROUTES
-// Mọi đường dẫn bắt đầu bằng '/api/users' sẽ được xử lý bởi file userRoutes
+// KÍCH HOẠT CÁC ROUTES
 app.use('/api/users', userRoutes);
-
-// KÍCH HOẠT SHOP ROUTES
 app.use('/api/shops', shopRoutes);
-
-// KÍCH HOẠT ADMIN ROUTES
 app.use('/api/admin', adminRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/categories', categoryRoutes);
