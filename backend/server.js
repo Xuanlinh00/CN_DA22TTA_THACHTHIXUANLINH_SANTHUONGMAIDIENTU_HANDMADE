@@ -17,7 +17,6 @@ dotenv.config(); // Đọc file .env
 const app = express(); // Tạo app Express
 app.use(cors()); // Cho phép React gọi API
 
-// === DÒNG QUAN TRỌNG NHẤT LÀ ĐÂY ===
 // Phải đặt TRƯỚC các dòng app.use routes
 app.use(express.json()); // Giúp server đọc hiểu dữ liệu JSON gửi lên
 // ===================================
