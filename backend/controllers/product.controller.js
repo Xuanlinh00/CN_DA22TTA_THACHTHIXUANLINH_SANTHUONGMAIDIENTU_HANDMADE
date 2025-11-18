@@ -1,14 +1,14 @@
 const Product = require('../models/product.model.js');
 const Shop = require('../models/shop.model.js');
-// (Chúng ta sẽ cần Category model sau)
+const Category = require('../models/category.model.js'); // Import Category
 
 // @desc    Vendor (Chủ shop) tạo một sản phẩm mới
 // @route   POST /api/products
 // @access  Private (Chỉ Vendor)
 const createProduct = async (req, res) => {
     try {
-        // 1. Lấy thông tin sản phẩm từ request body
-        const { name, description, price, category, stockQuantity, image } = req.body;
+        // 1. Lấy thông tin sản phẩm từ request body (ĐÃ CẬP NHẬT THEO ERD)
+        const { name, description, price, categoryId, stockQuantity, image, material } = req.body;
 
         // 2. Lấy thông tin user (vendor) từ middleware 'protect'
         const userId = req.user._id;
@@ -26,20 +26,28 @@ const createProduct = async (req, res) => {
             res.status(403); // 403 = Forbidden
             throw new Error('Gian hàng của bạn chưa được duyệt. Không thể đăng sản phẩm.');
         }
+        
+        // 5. Kiểm tra xem Category ID có hợp lệ không
+        const categoryExists = await Category.findById(categoryId);
+        if (!categoryExists) {
+            res.status(400);
+            throw new Error('Danh mục (Category) không hợp lệ.');
+        }
 
-        // 5. Tạo sản phẩm mới
+        // 6. Tạo sản phẩm mới
         const product = await Product.create({
             user: userId, // ID của chủ shop
             shop: shop._id, // ID của gian hàng
             name,
             description,
             price,
-            category, // (Tạm thời chúng ta sẽ truyền ID của category)
+            category: categoryId, // Gán ID của category
             stockQuantity,
-            image: image || '/images/default-product.png',
+            image: image || undefined, // Nếu không có ảnh thì lấy default
+            material: material || undefined, // <-- MỚI TỪ ERD
         });
 
-        // 6. Trả về sản phẩm đã tạo
+        // 7. Trả về sản phẩm đã tạo
         res.status(201).json(product); // 201 = Created
 
     } catch (error) {
@@ -47,24 +55,19 @@ const createProduct = async (req, res) => {
     }
 };
 
-// === THÊM CÁC HÀM MỚI CHO TUẦN 2 (Khách hàng) ===
-
 // @desc    Lấy tất cả sản phẩm (cho Khách hàng)
 // @route   GET /api/products
 // @access  Public
 const getProducts = async (req, res) => {
     try {
         // Chỉ lấy các sản phẩm từ các shop đã 'active'
-        // 1. Tìm tất cả shop đã 'active'
         const activeShops = await Shop.find({ status: 'active' }).select('_id');
         const activeShopIds = activeShops.map(shop => shop._id);
 
-        // 2. Tìm tất cả sản phẩm thuộc các shop 'active' đó
-        // .populate('shop', 'shopName') -> Lấy kèm tên của shop
-        const products = await Product.find({ shop: { $in: activeShopIds } }).populate(
-            'shop',
-            'shopName'
-        );
+        // Tìm tất cả sản phẩm thuộc các shop 'active'
+        const products = await Product.find({ shop: { $in: activeShopIds } })
+            .populate('shop', 'shopName')
+            .populate('category', 'name'); // Lấy kèm tên shop và tên category
 
         res.status(200).json(products);
     } catch (error) {
@@ -77,10 +80,9 @@ const getProducts = async (req, res) => {
 // @access  Public
 const getProductById = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id).populate(
-            'shop',
-            'shopName status' // Lấy kèm tên shop và trạng thái shop
-        );
+        const product = await Product.findById(req.params.id)
+            .populate('shop', 'shopName status') // Lấy kèm tên shop và trạng thái
+            .populate('category', 'name'); // Lấy kèm tên category
 
         if (!product) {
             res.status(404); // 404 = Not Found
@@ -98,9 +100,8 @@ const getProductById = async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 };
-// ===============================================
 
-// Cập nhật lại module.exports để export cả 3 hàm
+// Cập nhật lại module.exports
 module.exports = {
     createProduct,
     getProducts,

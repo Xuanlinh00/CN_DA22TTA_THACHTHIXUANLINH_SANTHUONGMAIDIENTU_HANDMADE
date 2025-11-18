@@ -17,12 +17,20 @@ const userSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        // === THÊM TỪ ERD (Handmadeshop.png) ===
+        avatar: { 
+            type: String, 
+            default: '/images/default-avatar.png' 
+        },
+        gender: { 
+            type: String, 
+            enum: ['male', 'female', 'other'] 
+        },
+        // ===================================
         role: {
             type: String,
             required: true,
-            // === CẬP NHẬT THEO ĐỀ CƯƠNG MỚI ===
             enum: ['customer', 'vendor', 'admin'], // Hỗ trợ 3 vai trò
-            // ===================================
             default: 'customer',
         },
     },
@@ -33,14 +41,11 @@ const userSchema = new mongoose.Schema(
 
 // 2. Tự động MÃ HÓA mật khẩu TRƯỚC KHI lưu
 userSchema.pre('save', async function (next) {
-    // Chỉ mã hóa khi mật khẩu được thay đổi (hoặc tạo mới)
     if (!this.isModified('password')) {
         next();
     }
-
-    // "Băm" mật khẩu
-    const salt = await bcrypt.genSalt(10); // Tạo "muối"
-    this.password = await bcrypt.hash(this.password, salt); // Mã hóa
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
 });
 
 // 3. Thêm một hàm (method) để so sánh mật khẩu khi đăng nhập

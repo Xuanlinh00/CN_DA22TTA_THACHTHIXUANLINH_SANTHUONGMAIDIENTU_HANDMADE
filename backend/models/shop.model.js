@@ -2,33 +2,44 @@ const mongoose = require('mongoose');
 
 const shopSchema = new mongoose.Schema(
     {
-        // Liên kết đến user (chủ shop)
         user: {
             type: mongoose.Schema.Types.ObjectId,
             required: true,
-            ref: 'User', // 'User' là tên Model user của chúng ta
-            unique: true, // Đảm bảo 1 user chỉ có 1 shop
+            ref: 'User', 
+            unique: true, 
         },
         shopName: {
             type: String,
             required: true,
-            unique: true, // Tên shop không được trùng
+            unique: true, 
         },
         description: {
             type: String,
             required: true,
         },
-        avatar: {
-            type: String,
-            default: '/images/default-shop.png', // Ảnh đại diện mặc định
+        // === THÊM TỪ ERD (Handmadeshop.png) ===
+        address: { 
+            type: String, 
+            required: true 
         },
-        // === THÊM TRƯỜNG MỚI THEO ĐỀ CƯƠNG ===
-        status: {
+        phone: { 
+            type: String, 
+            required: true 
+        },
+        avatar: { // (Đã có trong code của bạn)
             type: String,
-            enum: ['pending', 'active', 'rejected'],
-            default: 'pending', // Mặc định là 'chờ duyệt'
+            default: '/images/default-shop-avatar.png', 
+        },
+        coverImage: { 
+            type: String, 
+            default: '/images/default-shop-cover.png' 
         },
         // ===================================
+        status: { // (Đã có trong code của bạn)
+            type: String,
+            enum: ['pending', 'active', 'rejected'],
+            default: 'pending', 
+        },
     },
     {
         timestamps: true,
