@@ -1,55 +1,59 @@
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema(
-    {
-        user: {
-            type: mongoose.Schema.Types.ObjectId,
-            required: true,
-            ref: 'User',
-        },
-        shop: {
-            type: mongoose.Schema.Types.ObjectId,
-            required: true,
-            ref: 'Shop',
-        },
-        category: {
-            type: mongoose.Schema.Types.ObjectId,
-            required: true,
-            ref: 'Category',
-        },
-        name: {
-            type: String,
-            required: true,
-        },
-        description: {
-            type: String,
-            required: true,
-        },
-        // === THÊM TỪ ERD (Handmadeshop.png) ===
-        material: { 
-            type: String 
-        },
-        // ===================================
-        image: {
-            type: String,
-            required: true,
-            default: '/images/default-product.png',
-        },
-        price: {
-            type: Number,
-            required: true,
-            default: 0,
-        },
-        stockQuantity: {
-            type: Number,
-            required: true,
-            default: 0,
-        },
+  {
+    name: {
+      type: String,
+      required: [true, 'Tên sản phẩm là bắt buộc'],
+      trim: true,
     },
-    {
-        timestamps: true,
-    }
+    description: {
+      type: String,
+      required: [true, 'Mô tả sản phẩm là bắt buộc'],
+    },
+    price: {
+      type: Number,
+      required: [true, 'Giá sản phẩm là bắt buộc'],
+      min: [0, 'Giá không hợp lệ'],
+    },
+    images: [
+      {
+        type: String,
+        default: '/images/default-product.png',
+      },
+    ],
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      required: true,
+    },
+    shop: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Shop',
+      required: true,
+    },
+    stock: {
+      type: Number,
+      default: 0,
+      min: [0, 'Số lượng tồn kho không hợp lệ'],
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    tags: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+  },
+  { timestamps: true }
 );
 
+// Index để tìm kiếm nhanh theo tên và mô tả
+productSchema.index({ name: 'text', description: 'text' });
+
 const Product = mongoose.model('Product', productSchema);
+
 module.exports = Product;

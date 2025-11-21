@@ -1,30 +1,25 @@
-// Import các thư viện và component
-import Header from './components/Header.jsx';
 import { Routes, Route } from 'react-router-dom';
-import LoginPage from './pages/LoginPage.jsx'; 
+import Navbar from './components/jsx/Navbar';
+import Footer from './components/jsx/Footer';
+import Login from './pages/jsx/Login';
+import Register from './pages/jsx/Register';
+import ProductList from './pages/jsx/ProductList';
+import ProductDetail from './pages/jsx/ProductDetail';
+import Revenue from './pages/jsx/Revenue';
 
 function App() {
   return (
-    <div>
-      {}
-      <Header />
-
-      {/* Đây là phần // ... (trước) */}
-      <main>
-        <Routes>
-          {/* Trang chủ */}
-          <Route path="/" element={<h2>Đây là Trang Chủ</h2>} />
-
-          {/* THÊM ROUTE MỚI CHO TRANG ĐĂNG NHẬP */}
-          <Route path="/login" element={<LoginPage />} />
-          
-          {/* (Chúng ta sẽ thêm các trang Đăng ký, Sản phẩm... vào đây sau) */}
-        </Routes>
-      </main>
-      {/* Đây là phần // ... (sau) */}
-      
-      {/* (Chúng ta có thể thêm Footer vào đây sau) */}
-    </div>
+    <>
+      <Navbar />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/products" element={<ProductList />} />
+        <Route path="/products/:id" element={<ProductDetail />} />
+        <Route path="/revenue" element={<Revenue userRole="admin" />} />
+      </Routes>
+      <Footer />
+    </>
   );
 }
 

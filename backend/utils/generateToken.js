@@ -1,18 +1,23 @@
 const jwt = require('jsonwebtoken');
 
 const generateToken = (res, userId) => {
-    // Tạo token với thông tin userId
-    const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
-        expiresIn: '30d', // Token hết hạn sau 30 ngày
-    });
+  const token = jwt.sign(
+    { userId },
+    process.env.JWT_SECRET,
+    { expiresIn: '30d' }
+  );
 
-    // Gửi token về qua cookie (an toàn hơn lưu ở localStorage)
-    res.cookie('jwt', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV !== 'development', // Chỉ dùng HTTPS khi deploy
-        sameSite: 'strict',
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 ngày
-    });
+  res.cookie('jwt', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.COOKIE_SAMESITE || 'strict',
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    domain: process.env.COOKIE_DOMAIN || undefined,
+  });
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('JWT generated for user:', userId);
+  }
 };
 
 module.exports = generateToken;

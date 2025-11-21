@@ -1,22 +1,37 @@
 const express = require('express');
 const router = express.Router();
+const { protect, admin } = require('../middleware/auth.middleware.js');
 const {
-    getPendingShops,
-    approveShop,
-} = require('../controllers/admin.controller.js'); // Import Admin Controller
-const { protect, admin } = require('../middleware/auth.middleware.js'); // Import "người gác cổng"
+  // Shop
+  getPendingShops,
+  approveShop,
+  getAllShops,
+  deleteShop,
+  // User
+  getAllUsers,
+  deleteUser,
+  updateUserRole,
+  // Stats
+  getRevenueStats,
+  getOrderStats,
+} = require('../controllers/admin.controller.js');
 
-// === TẤT CẢ CÁC ROUTE CỦA ADMIN ===
-// Áp dụng "người gác cổng" cho TẤT CẢ các route bên dưới
-// User phải Đăng nhập (protect) VÀ là Admin (admin)
+// Áp dụng middleware cho tất cả route
 router.use(protect, admin);
 
-// @route   GET /api/admin/pending-shops
-// Lấy tất cả shop đang chờ duyệt
+// Shop management
 router.get('/pending-shops', getPendingShops);
-
-// @route   PUT /api/admin/shops/approve/:id
-// Duyệt hoặc từ chối shop (với :id là ID của shop)
 router.put('/shops/approve/:id', approveShop);
+router.get('/shops', getAllShops);
+router.delete('/shops/:id', deleteShop);
+
+// User management
+router.get('/users', getAllUsers);
+router.delete('/users/:id', deleteUser);
+router.put('/users/:id/role', updateUserRole);
+
+// Stats
+router.get('/stats/revenue', getRevenueStats);
+router.get('/stats/orders', getOrderStats);
 
 module.exports = router;

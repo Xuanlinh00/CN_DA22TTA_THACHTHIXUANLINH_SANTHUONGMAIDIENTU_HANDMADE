@@ -1,55 +1,53 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/user.model.js');
+const User = require('../models/user.model');
 
-// Middleware 1: Kiểm tra Token (Đã đăng nhập chưa?)
+// Middleware: Xác thực người dùng qua JWT
 const protect = async (req, res, next) => {
-    let token;
+  const token = req.cookies?.jwt;
 
-    // Đọc token từ cookie (chúng ta đã lưu nó tên là 'jwt')
-    token = req.cookies.jwt;
+  if (!token) {
+    return res.status(401).json({ message: 'Không có token, truy cập bị từ chối' });
+  }
 
-    if (token) {
-        try {
-            // Xác thực token
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  try {
+    // Giải mã token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-            // Lấy thông tin user từ ID trong token (trừ mật khẩu)
-            // và gắn nó vào request để các hàm sau có thể dùng
-            req.user = await User.findById(decoded.userId).select('-password');
-
-            next(); // Cho phép đi tiếp
-        } catch (error) {
-            console.error(error);
-            res.status(401); // 401 = Unauthorized
-            res.json({ message: 'Token không hợp lệ, truy cập bị từ chối' });
-        }
-    } else {
-        res.status(401);
-        res.json({ message: 'Không có token, truy cập bị từ chối' });
+    // Lấy thông tin user từ DB
+    const user = await User.findById(decoded.userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'Người dùng không tồn tại' });
     }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('Lỗi xác thực token:', error.message);
+    return res.status(401).json({ message: 'Token không hợp lệ, truy cập bị từ chối' });
+  }
 };
 
-// Middleware 2: Kiểm tra vai trò (Có phải Vendor không?)
-const vendor = (req, res, next) => {
-    if (req.user && req.user.role === 'vendor') {
-        next(); // Là vendor, cho phép đi tiếp
-    } else {
-        res.status(403); // 403 = Forbidden
-        res.json({ message: 'Không phải là Vendor, không có quyền truy cập' });
-    }
-};
-
-// === THÊM MIDDLEWARE MỚI CHO ADMIN (THEO ĐỀ CƯƠNG) ===
-// Middleware 3: Kiểm tra vai trò (Có phải Admin không?)
+// Middleware: Kiểm tra quyền admin
 const admin = (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
-        next(); // Là admin, cho phép đi tiếp
-    } else {
-        res.status(403); // 403 = Forbidden
-        res.json({ message: 'Không phải là Admin, không có quyền truy cập' });
-    }
+  if (req.user && req.user.role === 'admin') {
+    next();
+  } else {
+    return res.status(403).json({ message: 'Chỉ admin mới được phép' });
+  }
 };
-// ===================================================
 
-// Cập nhật module.exports để export cả 3 hàm
-module.exports = { protect, vendor, admin };
+// Middleware: Kiểm tra theo nhiều vai trò (nếu cần)
+const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ message: 'Không có quyền truy cập' });
+    }
+    next();
+  };
+};
+
+module.exports = {
+  protect,
+  admin,
+  authorize,
+};

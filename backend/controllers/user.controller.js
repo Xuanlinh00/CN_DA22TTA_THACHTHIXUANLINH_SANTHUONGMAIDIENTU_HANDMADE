@@ -1,102 +1,129 @@
-const User = require('../models/user.model.js');
-const generateToken = require('../utils/generateToken.js');
+const User = require('../models/user.model');
+const generateToken = require('../utils/generateToken');
 
-// @desc    Đăng ký user mới
-// @route   POST /api/users/register
-// @access  Public
+// Đăng ký
 const registerUser = async (req, res) => {
-    // 1. Lấy thông tin từ request (BỎ 'role' ra, user không được tự chọn)
-    const { name, email, password } = req.body;
+  const { name, email, password } = req.body;
 
-    try {
-        // 2. Kiểm tra xem email đã tồn tại chưa
-        const userExists = await User.findOne({ email });
-
-        if (userExists) {
-            res.status(400); // 400 = Bad Request
-            throw new Error('Email đã được sử dụng');
-        }
-
-        // --- LOGIC MỚI CHO 3 VAI TRÒ (THEO ĐỀ CƯƠNG) ---
-        // Tự động gán vai trò dựa trên email
-        let role = 'customer'; // Mặc định là customer
-        
-        // Giả sử email admin đặc biệt, chỉ có 1
-        // (Bạn có thể thay đổi email này trong file .env sau)
-        if (email === 'admin@gmail.com') { 
-            role = 'admin';
-        }
-        // (Vai trò 'vendor' sẽ được gán sau khi họ tạo shop)
-        // ----------------------------------------------
-
-        // 3. Nếu chưa tồn tại, tạo user mới
-        // (Mật khẩu sẽ tự động được mã hóa nhờ 'pre.save' trong Model)
-        const user = await User.create({
-            name,
-            email,
-            password,
-            role, // Gán vai trò đã được kiểm soát
-        });
-
-        // 4. Nếu tạo thành công, tạo Token và gửi về cookie
-        if (user) {
-            generateToken(res, user._id); // Gửi token qua cookie
-
-            // 5. Trả về thông tin user (không bao gồm mật khẩu)
-            res.status(201).json({ // 201 = Created
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                message: "Đăng ký thành công!"
-            });
-        } else {
-            res.status(400);
-            throw new Error('Thông tin user không hợp lệ');
-        }
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+  try {
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin' });
     }
+
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ message: 'Email đã được sử dụng' });
+    }
+
+    let role = 'customer';
+    if (email === process.env.ADMIN_EMAIL) role = 'admin';
+
+    const user = await User.create({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password,
+      role,
+    });
+
+    if (user) {
+      generateToken(res, user._id);
+      res.status(201).json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        message: 'Đăng ký thành công!',
+      });
+    } else {
+      res.status(400).json({ message: 'Thông tin user không hợp lệ' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Không thể đăng ký: ' + error.message });
+  }
 };
 
-// @desc    Đăng nhập (Xác thực) user
-// @route   POST /api/users/login
-// @access  Public
+// Đăng nhập
 const loginUser = async (req, res) => {
-    // 1. Lấy email và password từ request
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    try {
-        // 2. Tìm user bằng email
-        const user = await User.findOne({ email });
-
-        // 3. Nếu user tồn tại VÀ mật khẩu khớp
-        // (Hàm matchPassword đã được tạo trong Model)
-        if (user && (await user.matchPassword(password))) {
-            
-            // 4. Tạo Token và gửi về cookie
-            generateToken(res, user._id);
-
-            // 5. Trả về thông tin user
-            res.status(200).json({ // 200 = OK
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                message: "Đăng nhập thành công!"
-            });
-        } else {
-            // Nếu user không tồn tại hoặc sai mật khẩu
-            res.status(401); // 401 = Unauthorized
-            throw new Error('Email hoặc mật khẩu không chính xác');
-        }
-    } catch (error) {
-        res.status(401).json({ message: error.message });
+  try {
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Vui lòng nhập email và mật khẩu' });
     }
+
+    const user = await User.findOne({ email });
+    if (user && (await user.matchPassword(password))) {
+      generateToken(res, user._id);
+      res.status(200).json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        message: 'Đăng nhập thành công!',
+      });
+    } else {
+      res.status(401).json({ message: 'Email hoặc mật khẩu không chính xác' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Không thể đăng nhập: ' + error.message });
+  }
 };
 
-// 6. Export các hàm này ra
-module.exports = {
-    registerUser,
-    loginUser,
+// Đăng xuất
+const logoutUser = async (req, res) => {
+  try {
+    res.cookie('jwt', '', {
+      httpOnly: true,
+      expires: new Date(0),
+    });
+    res.status(200).json({ message: 'Đăng xuất thành công!' });
+  } catch (error) {
+    res.status(500).json({ message: 'Không thể đăng xuất: ' + error.message });
+  }
 };
+
+// Lấy profile
+const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Không thể lấy thông tin cá nhân' });
+  }
+};
+
+// Cập nhật profile
+const updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+
+    user.name = req.body.name || user.name;
+
+    if (req.body.email && req.body.email !== user.email) {
+      const emailExists = await User.findOne({ email: req.body.email });
+      if (emailExists) {
+        return res.status(400).json({ message: 'Email đã được sử dụng' });
+      }
+      user.email = req.body.email;
+    }
+
+    if (req.body.password) {
+      user.password = req.body.password;
+    }
+
+    const updatedUser = await user.save();
+    const { _id, name, email, role } = updatedUser;
+
+    res.status(200).json({ _id, name, email, role, message: 'Cập nhật thông tin thành công!' });
+  } catch (error) {
+    res.status(500).json({ message: 'Không thể cập nhật: ' + error.message });
+  }
+};
+
+module.exports = { registerUser, loginUser, logoutUser, getProfile, updateProfile };

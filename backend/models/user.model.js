@@ -1,58 +1,73 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs'); // Import thư viện mã hóa
+const bcrypt = require('bcryptjs');
 
-// 1. Định nghĩa Schema (Cấu trúc CSDL)
 const userSchema = new mongoose.Schema(
-    {
-        name: {
-            type: String,
-            required: true,
-        },
-        email: {
-            type: String,
-            required: true,
-            unique: true, // Email không được trùng
-        },
-        password: {
-            type: String,
-            required: true,
-        },
-        // === THÊM TỪ ERD (Handmadeshop.png) ===
-        avatar: { 
-            type: String, 
-            default: '/images/default-avatar.png' 
-        },
-        gender: { 
-            type: String, 
-            enum: ['male', 'female', 'other'] 
-        },
-        // ===================================
-        role: {
-            type: String,
-            required: true,
-            enum: ['customer', 'vendor', 'admin'], // Hỗ trợ 3 vai trò
-            default: 'customer',
-        },
+  {
+    name: {
+      type: String,
+      required: [true, 'Tên người dùng là bắt buộc'],
+      trim: true,
     },
-    {
-        timestamps: true, // Tự động thêm 2 trường: createdAt và updatedAt
-    }
+    email: {
+      type: String,
+      required: [true, 'Email là bắt buộc'],
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: [/.+\@.+\..+/, 'Email không hợp lệ'],
+    },
+    password: {
+      type: String,
+      required: [true, 'Mật khẩu là bắt buộc'],
+      minlength: [6, 'Mật khẩu phải có ít nhất 6 ký tự'],
+    },
+    avatar: {
+      type: String,
+      default: '/images/default-avatar.png',
+    },
+    gender: {
+      type: String,
+      enum: ['male', 'female', 'other'],
+    },
+    role: {
+      type: String,
+      enum: ['customer', 'vendor', 'admin'],
+      default: 'customer',
+    },
+    status: {
+      type: String,
+      enum: ['active', 'inactive', 'banned'],
+      default: 'active',
+    },
+  },
+  { timestamps: true }
 );
 
-// 2. Tự động MÃ HÓA mật khẩu TRƯỚC KHI lưu
+// Hash mật khẩu trước khi lưu
 userSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) {
-        next();
-    }
+  if (!this.isModified('password')) return next();
+  try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
-// 3. Thêm một hàm (method) để so sánh mật khẩu khi đăng nhập
+// So sánh mật khẩu
 userSchema.methods.matchPassword = async function (enteredPassword) {
-    return await bcrypt.compare(enteredPassword, this.password);
+  return bcrypt.compare(enteredPassword, this.password);
 };
 
-// 4. Tạo và export Model
-const User = mongoose.model('User', userSchema);
-module.exports = User;
+// Ẩn mật khẩu khi trả về JSON
+userSchema.methods.toJSON = function () {
+  const obj = this.toObject();
+  delete obj.password;
+  return obj;
+};
+
+// Index cho email
+userSchema.index({ email: 1 });
+
+module.exports = mongoose.model('User', userSchema);
