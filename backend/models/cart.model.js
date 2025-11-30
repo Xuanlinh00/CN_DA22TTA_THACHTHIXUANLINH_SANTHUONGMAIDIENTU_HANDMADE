@@ -68,8 +68,8 @@ cartSchema.pre('validate', function (next) {
   next();
 });
 
-// Index để truy vấn nhanh theo customer
-cartSchema.index({ customer: 1 });
+
+
 
 const Cart = mongoose.model('Cart', cartSchema);
 module.exports = Cart;

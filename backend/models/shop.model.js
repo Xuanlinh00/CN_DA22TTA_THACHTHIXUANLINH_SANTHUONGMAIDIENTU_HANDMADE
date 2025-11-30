@@ -57,8 +57,6 @@ const shopSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Index để tìm kiếm nhanh theo tên
-shopSchema.index({ shopName: 1 });
 
 const Shop = mongoose.model('Shop', shopSchema);
 module.exports = Shop;

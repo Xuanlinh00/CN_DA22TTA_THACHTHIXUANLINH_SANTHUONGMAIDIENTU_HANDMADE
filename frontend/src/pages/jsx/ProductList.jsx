@@ -1,34 +1,39 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import '../css/ProductList.css';
+import React, { useEffect, useState } from "react";
+import "../css/ProductList.css";
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    // Gọi API lấy danh sách sản phẩm
-    axios.get('/api/products')
-      .then(res => setProducts(res.data))
+    fetch("http://localhost:5000/api/products")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setProducts(data.data);
+      })
       .catch(err => console.error(err));
   }, []);
 
   return (
-    <div className="productlist-container">
-      <h1 className="productlist-title">Danh sách sản phẩm</h1>
-      {products.length === 0 ? (
-        <p className="empty-msg">Chưa có sản phẩm nào</p>
-      ) : (
-        <div className="productlist-grid">
-          {products.map(product => (
-            <div key={product._id} className="product-card">
-              <img src={product.image} alt={product.name} className="product-img" />
-              <h3>{product.name}</h3>
-              <p>{product.price} VND</p>
-              <button className="buy-btn">Xem chi tiết</button>
+    <div className="product-list-container">
+      <h2 className="page-title">Danh Sách Sản Phẩm</h2>
+      <div className="products-grid">
+        {products.map((p) => (
+          <div className="product-card" key={p._id}>
+            <div className="product-image">
+              <img src={p.image} alt={p.name} />
+              {p.isHot && <span className="product-badge">Hot</span>}
             </div>
-          ))}
-        </div>
-      )}
+            <div className="product-info">
+              <h3 className="product-title">{p.name}</h3>
+              <div className="product-price">{p.price}đ</div>
+              <div className="product-actions">
+                <a href={`/product/${p._id}`} className="btn-orange">Xem Chi Tiết</a>
+                <button className="btn-cart">Thêm vào giỏ</button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

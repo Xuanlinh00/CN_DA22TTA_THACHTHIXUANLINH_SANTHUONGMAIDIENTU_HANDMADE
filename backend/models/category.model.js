@@ -23,8 +23,7 @@ const categorySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Index để tìm kiếm nhanh theo slug
-categorySchema.index({ slug: 1 });
+
 
 const Category = mongoose.model('Category', categorySchema);
 module.exports = Category;

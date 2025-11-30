@@ -1,80 +1,58 @@
-:root {
-  --brown-dark: #4e342e;
-  --brown-medium: #6d4c41;
-  --brown-light: #8d6e63;
-  --cream: #f5f5dc;
-  --white: #ffffff;
+.vendor-dashboard {
+  max-width: 1000px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background: var(--cream);
+  border-radius: 15px;
+  box-shadow: var(--shadow);
 }
 
-.vendor-dashboard-container {
-  background-color: var(--cream);
-  padding: 30px;
-  min-height: 100vh;
-}
-
-.dashboard-title {
+.page-title {
   text-align: center;
-  font-size: 30px;
-  color: var(--brown-dark);
-  margin-bottom: 30px;
+  font-size: 2rem;
+  color: var(--dark-brown);
+  margin-bottom: 2rem;
 }
 
-.dashboard-section {
-  margin-bottom: 40px;
-}
-
-.section-title {
-  font-size: 24px;
-  color: var(--brown-dark);
-  margin-bottom: 20px;
-}
-
-.empty-msg {
-  text-align: center;
-  font-size: 18px;
-  color: var(--brown-medium);
-}
-
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
-}
-
-.dashboard-card {
-  background-color: var(--white);
-  border: 1px solid var(--brown-light);
-  border-radius: 8px;
-  padding: 15px;
-  text-align: center;
-  box-shadow: 0 2px 6px rgba(78, 52, 46, 0.2);
-  transition: 0.3s;
-}
-
-.dashboard-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 10px rgba(78, 52, 46, 0.3);
-}
-
-.dashboard-img {
-  width: 100%;
-  height: 160px;
-  object-fit: cover;
-  border-radius: 6px;
-  border: 2px solid var(--brown-light);
-  margin-bottom: 10px;
-}
-
-.orders-list {
+.vendor-form {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
-.order-card {
-  background-color: var(--white);
-  border: 1px solid var(--brown-light);
+.vendor-form input {
+  padding: 0.8rem 1rem;
+  border: 2px solid var(--light-orange);
+  border-radius: 10px;
+}
+
+.vendor-form button {
+  background: var(--primary-orange);
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.5rem;
+}
+
+.product-card {
+  background: white;
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.product-card img {
+  width: 100%;
   border-radius: 8px;
-  padding: 15px;
-  box-shadow: 0 2px 6px rgba(78, 52, 46, 0.2);
+  margin-bottom: 0.5rem;
 }

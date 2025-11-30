@@ -1,68 +1,55 @@
-import React, { useState } from 'react';
-import '../css/Contact.css';
+import React, { useState } from "react";
+import "../css/Contact.css";
 
 const Contact = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    message: '',
-  });
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const [form, setForm] = useState({ name: "", email: "", message: "" });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Gọi API gửi liên hệ
-    console.log('Thông tin liên hệ:', formData);
-    alert('Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm.');
+    fetch("http://localhost:5000/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("Gửi liên hệ thành công!");
+          setForm({ name: "", email: "", message: "" });
+        } else {
+          alert("Có lỗi xảy ra khi gửi liên hệ");
+        }
+      });
   };
 
   return (
     <div className="contact-container">
-      <h1 className="contact-title">Liên hệ với chúng tôi</h1>
-      <div className="contact-content">
-        {/* Form liên hệ */}
-        <form className="contact-form" onSubmit={handleSubmit}>
-          <label>Họ và tên</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-
-          <label>Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-
-          <label>Nội dung</label>
-          <textarea
-            name="message"
-            value={formData.message}
-            onChange={handleChange}
-            rows="5"
-            required
-          ></textarea>
-
-          <button type="submit" className="contact-btn">Gửi liên hệ</button>
-        </form>
-
-        {/* Thông tin liên hệ */}
-        <div className="contact-info">
-          <h2>Thông tin cửa hàng</h2>
-          <p>📍 Địa chỉ: 123 Đường ABC, Vĩnh Long</p>
-          <p>📞 Số điện thoại: 0123 456 789</p>
-          <p>✉️ Email: support@handmade-shop.com</p>
-        </div>
-      </div>
+      <h2 className="page-title">Hỗ Trợ Khách Hàng</h2>
+      <p>Liên hệ với chúng tôi qua hotline hoặc gửi tin nhắn trực tiếp:</p>
+      <ul className="contact-info">
+        <li>📞 Hotline: 0123 456 789</li>
+        <li>📧 Email: support@craftify.vn</li>
+      </ul>
+      <form onSubmit={handleSubmit} className="contact-form">
+        <input
+          type="text"
+          placeholder="Tên của bạn"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+        />
+        <input
+          type="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+        />
+        <textarea
+          placeholder="Nội dung liên hệ"
+          value={form.message}
+          onChange={(e) => setForm({ ...form, message: e.target.value })}
+        />
+        <button type="submit" className="btn-orange">Gửi Liên Hệ</button>
+      </form>
     </div>
   );
 };

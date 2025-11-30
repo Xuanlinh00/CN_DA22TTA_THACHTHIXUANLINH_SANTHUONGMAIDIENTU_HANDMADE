@@ -1,30 +1,54 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import '../css/Home.css';
+import React, { useEffect, useState } from "react";
+import Layout from "../../components/jsx/Layout";
+import "../css/Home.css";
 
 const Home = () => {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    // Gọi API lấy danh sách sản phẩm
-    axios.get('/api/products')
-      .then(res => setProducts(res.data))
+    fetch(`${import.meta.env.VITE_API_URL}/api/products`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setProducts(data.data);
+      })
       .catch(err => console.error(err));
   }, []);
 
   return (
-    <div className="home-container">
-      <h1 className="home-title">Sản phẩm nổi bật</h1>
-      <div className="product-grid">
-        {products.map(product => (
-          <div key={product._id} className="product-card">
-            <img src={product.image} alt={product.name} className="product-img" />
-            <h3>{product.name}</h3>
-            <p>{product.price} VND</p>
-          </div>
-        ))}
-      </div>
-    </div>
+    <Layout>
+      <section className="hero">
+        {/* Hero content như bạn đã viết */}
+      </section>
+
+      <section className="categories">
+        {/* Categories như bạn đã viết */}
+      </section>
+
+      <section className="products">
+        <div className="section-header">
+          <span className="section-tag">Sản Phẩm</span>
+          <h2 className="section-title">Sản Phẩm Nổi Bật</h2>
+        </div>
+        <div className="products-grid">
+          {products.map((p) => (
+            <div className="product-card" key={p._id}>
+              <div className="product-image">
+                <img src={p.image} alt={p.name} />
+                <span className="product-badge">Hot</span>
+              </div>
+              <div className="product-info">
+                <h3 className="product-title">{p.name}</h3>
+                <div className="product-price">{p.price}đ</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="cta-section">
+        {/* CTA như bạn đã viết */}
+      </section>
+    </Layout>
   );
 };
 

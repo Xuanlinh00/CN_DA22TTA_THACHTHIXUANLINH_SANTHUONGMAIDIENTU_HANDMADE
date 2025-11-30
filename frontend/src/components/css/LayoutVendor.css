@@ -1,0 +1,10 @@
+.vendor-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--cream);
+}
+
+.vendor-content {
+  flex: 1;
+  padding: 2rem;
+}

@@ -1,0 +1,31 @@
+.sidebar {
+  background: var(--cream);
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  width: 250px;
+}
+
+.sidebar h3 {
+  color: var(--primary-orange);
+  margin-bottom: 1rem;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li {
+  margin-bottom: 0.8rem;
+}
+
+.sidebar a {
+  color: var(--dark-brown);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.sidebar a:hover {
+  color: var(--primary-orange);
+}

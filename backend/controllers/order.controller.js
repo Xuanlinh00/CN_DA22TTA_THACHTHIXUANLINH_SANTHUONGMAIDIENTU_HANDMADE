@@ -1,15 +1,56 @@
 const Order = require('../models/order.model');
 const Shop = require('../models/shop.model');
 
-// @desc    Admin hoặc Vendor cập nhật trạng thái đơn hàng
-// @route   PATCH /api/orders/:id/status
-// @access  Private (Admin hoặc Vendor)
+// Khách hàng tạo đơn hàng
+const createOrder = async (req, res) => {
+  try {
+    const order = new Order({
+      customer: req.user._id, // lấy từ middleware protect
+      orderItems: req.body.orderItems,
+      shippingAddress: req.body.shippingAddress,
+      paymentMethod: req.body.paymentMethod,
+      totalPrice: req.body.totalPrice,
+    });
+
+    await order.save();
+    res.status(201).json({ success: true, data: order });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Khách hàng xem đơn hàng của mình
+const getMyOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({ customer: req.user._id })
+      .populate('orderItems.product', 'name price')
+      .populate('customer', 'name email');
+
+    res.status(200).json({ success: true, data: orders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Admin xem tất cả đơn hàng
+const getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate('orderItems.product', 'name price')
+      .populate('customer', 'name email');
+
+    res.status(200).json({ success: true, data: orders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Admin hoặc Vendor cập nhật trạng thái đơn hàng
 const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
-
-    // Kiểm tra trạng thái hợp lệ
     const validStatuses = ['pending_payment', 'processing', 'shipped', 'completed', 'cancelled'];
+
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: 'Trạng thái đơn hàng không hợp lệ' });
     }
@@ -38,7 +79,6 @@ const updateOrderStatus = async (req, res) => {
     }
 
     const updatedOrder = await order.save();
-
     res.status(200).json({
       message: 'Cập nhật trạng thái đơn hàng thành công',
       order: updatedOrder,
@@ -48,4 +88,9 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
-module.exports = { updateOrderStatus };
+module.exports = {
+  createOrder,
+  getMyOrders,
+  getAllOrders,
+  updateOrderStatus,
+};

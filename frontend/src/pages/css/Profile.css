@@ -1,65 +1,57 @@
 :root {
-  --brown-dark: #4e342e;
-  --brown-medium: #6d4c41;
-  --brown-light: #8d6e63;
-  --cream: #f5f5dc;
-  --white: #ffffff;
+  --primary-orange: #FF6F00;
+  --light-orange: #FFB74D;
+  --cream: #FFF8E1;
+  --dark-brown: #3D2817;
+  --shadow: 0 8px 30px rgba(61, 40, 23, 0.12);
 }
 
 .profile-container {
-  background-color: var(--cream);
-  padding: 30px;
-  min-height: 100vh;
+  max-width: 600px;
+  margin: 3rem auto;
+  background: var(--cream);
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: var(--shadow);
 }
 
-.profile-title {
+.page-title {
   text-align: center;
-  font-size: 28px;
-  color: var(--brown-dark);
-  margin-bottom: 25px;
+  font-size: 2rem;
+  color: var(--dark-brown);
+  margin-bottom: 2rem;
 }
 
 .profile-form {
-  max-width: 500px;
-  margin: auto;
-  background-color: var(--white);
-  border: 1px solid var(--brown-light);
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 6px rgba(78, 52, 46, 0.2);
   display: flex;
   flex-direction: column;
-  gap: 15px;
-}
-
-.profile-form label {
-  font-weight: bold;
-  color: var(--brown-dark);
+  gap: 1rem;
 }
 
 .profile-form input {
-  padding: 10px;
-  border: 1px solid var(--brown-medium);
-  border-radius: 6px;
-  font-size: 16px;
+  padding: 0.8rem 1rem;
+  border: 2px solid var(--light-orange);
+  border-radius: 10px;
+  font-size: 1rem;
 }
 
 .profile-form input:focus {
   outline: none;
-  border-color: var(--brown-dark);
+  border-color: var(--primary-orange);
+  box-shadow: 0 0 0 3px rgba(255, 111, 0, 0.2);
 }
 
-.profile-btn {
-  background-color: var(--brown-dark);
-  color: var(--white);
-  padding: 12px;
+.profile-form button {
+  background: var(--primary-orange);
+  color: white;
+  padding: 0.9rem 1.5rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 50px;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 16px;
-  transition: 0.3s;
+  transition: all 0.3s ease;
 }
 
-.profile-btn:hover {
-  background-color: var(--brown-medium);
+.profile-form button:hover {
+  background: var(--dark-brown);
 }

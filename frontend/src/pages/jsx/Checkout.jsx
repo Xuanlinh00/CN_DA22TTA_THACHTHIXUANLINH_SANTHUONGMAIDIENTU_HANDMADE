@@ -1,70 +1,75 @@
-import React, { useState } from 'react';
-import '../css/Checkout.css';
+import React, { useState } from "react";
+import Layout from "../../components/jsx/Layout";
+import "../css/Checkout.css";
 
 const Checkout = () => {
-  const [shippingInfo, setShippingInfo] = useState({
-    name: '',
-    address: '',
-    phone: '',
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    payment: "cod",
   });
 
-  const [paymentMethod, setPaymentMethod] = useState('VNPAY');
-
   const handleChange = (e) => {
-    setShippingInfo({ ...shippingInfo, [e.target.name]: e.target.value });
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Gọi API tạo đơn hàng
-    console.log('Thông tin giao hàng:', shippingInfo);
-    console.log('Phương thức thanh toán:', paymentMethod);
-    alert('Đặt hàng thành công!');
+    alert("✅ Đặt hàng thành công! Cảm ơn bạn đã mua sắm tại CRAFTIFY.");
+    // Sau này sẽ gửi dữ liệu form + giỏ hàng lên backend
   };
 
   return (
-    <div className="checkout-container">
-      <h1 className="checkout-title">Thanh toán đơn hàng</h1>
-      <form className="checkout-form" onSubmit={handleSubmit}>
-        <label>Họ và tên</label>
-        <input
-          type="text"
-          name="name"
-          value={shippingInfo.name}
-          onChange={handleChange}
-          required
-        />
-
-        <label>Địa chỉ giao hàng</label>
-        <input
-          type="text"
-          name="address"
-          value={shippingInfo.address}
-          onChange={handleChange}
-          required
-        />
-
-        <label>Số điện thoại</label>
-        <input
-          type="text"
-          name="phone"
-          value={shippingInfo.phone}
-          onChange={handleChange}
-          required
-        />
-
-        <label>Phương thức thanh toán</label>
-        <select
-          value={paymentMethod}
-          onChange={(e) => setPaymentMethod(e.target.value)}
-        >
-          <option value="VNPAY">VNPAY</option>
-          <option value="COD">Thanh toán khi nhận hàng (COD)</option>
-        </select>
-
-        <button type="submit" className="checkout-btn">Xác nhận đặt hàng</button>
-      </form>
-    </div>
+    <Layout>
+      <section className="checkout">
+        <h2>🧾 Thanh Toán</h2>
+        <form className="checkout-form" onSubmit={handleSubmit}>
+          <label>
+            Họ và tên:
+            <input 
+              type="text" 
+              name="name" 
+              value={form.name} 
+              onChange={handleChange} 
+              required 
+            />
+          </label>
+          <label>
+            Số điện thoại:
+            <input 
+              type="text" 
+              name="phone" 
+              value={form.phone} 
+              onChange={handleChange} 
+              required 
+            />
+          </label>
+          <label>
+            Địa chỉ giao hàng:
+            <textarea 
+              name="address" 
+              value={form.address} 
+              onChange={handleChange} 
+              required 
+            />
+          </label>
+          <label>
+            Phương thức thanh toán:
+            <select 
+              name="payment" 
+              value={form.payment} 
+              onChange={handleChange}
+            >
+              <option value="cod">Thanh toán khi nhận hàng (COD)</option>
+              <option value="bank">Chuyển khoản ngân hàng</option>
+              <option value="momo">Ví MoMo</option>
+            </select>
+          </label>
+          <button type="submit" className="btn-orange">Xác nhận đặt hàng</button>
+        </form>
+      </section>
+    </Layout>
   );
 };
 

@@ -1,64 +1,69 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import '../css/Profile.css';
+import React, { useEffect, useState } from "react";
+import "../css/Profile.css";
 
 const Profile = () => {
-  const [profile, setProfile] = useState({
-    name: '',
-    email: '',
-    phone: '',
-  });
+  const [user, setUser] = useState(null);
+  const [form, setForm] = useState({ name: "", email: "", address: "" });
 
   useEffect(() => {
-    // Gọi API lấy thông tin user
-    axios.get('/api/users/profile')
-      .then(res => setProfile(res.data))
+    fetch("http://localhost:5000/api/users/me")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setUser(data.data);
+          setForm({
+            name: data.data.name,
+            email: data.data.email,
+            address: data.data.address || "",
+          });
+        }
+      })
       .catch(err => console.error(err));
   }, []);
 
-  const handleChange = (e) => {
-    setProfile({ ...profile, [e.target.name]: e.target.value });
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Gọi API cập nhật profile
-    axios.put('/api/users/profile', profile)
-      .then(() => alert('Cập nhật thành công!'))
-      .catch(err => console.error(err));
+    fetch("http://localhost:5000/api/users/me", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("Cập nhật hồ sơ thành công!");
+          setUser(data.data);
+        } else {
+          alert("Có lỗi xảy ra khi cập nhật");
+        }
+      });
   };
+
+  if (!user) return <p>Đang tải hồ sơ...</p>;
 
   return (
     <div className="profile-container">
-      <h1 className="profile-title">Thông tin cá nhân</h1>
-      <form className="profile-form" onSubmit={handleSubmit}>
-        <label>Họ và tên</label>
+      <h2 className="page-title">Hồ Sơ Cá Nhân</h2>
+      <form onSubmit={handleSubmit} className="profile-form">
         <input
           type="text"
-          name="name"
-          value={profile.name}
-          onChange={handleChange}
-          required
+          placeholder="Tên"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
         />
-
-        <label>Email</label>
         <input
           type="email"
-          name="email"
-          value={profile.email}
-          onChange={handleChange}
-          required
+          placeholder="Email"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
         />
-
-        <label>Số điện thoại</label>
         <input
           type="text"
-          name="phone"
-          value={profile.phone}
-          onChange={handleChange}
+          placeholder="Địa chỉ"
+          value={form.address}
+          onChange={(e) => setForm({ ...form, address: e.target.value })}
         />
-
-        <button type="submit" className="profile-btn">Cập nhật</button>
+        <button type="submit" className="btn-orange">Cập Nhật</button>
       </form>
     </div>
   );

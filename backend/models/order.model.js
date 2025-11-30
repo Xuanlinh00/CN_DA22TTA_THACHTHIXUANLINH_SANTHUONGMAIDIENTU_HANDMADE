@@ -1,67 +1,63 @@
 const mongoose = require('mongoose');
 
-const orderItemSchema = new mongoose.Schema({
-  product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-  shop: { type: mongoose.Schema.Types.ObjectId, ref: 'Shop', required: true },
-  quantity: { type: Number, required: true, min: [1, 'Số lượng phải >= 1'] },
-  price: { type: Number, required: true, min: [0, 'Giá không được âm'] },
-  subtotal: { type: Number, required: true, min: [0, 'Tổng phụ không được âm'] },
-});
-
-// Tự động tính subtotal
-orderItemSchema.pre('validate', function (next) {
-  if (!this.subtotal) {
-    this.subtotal = this.price * this.quantity;
-  }
-  next();
-});
+const orderItemSchema = new mongoose.Schema(
+  {
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true,
+    },
+    shop: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Shop',
+      required: true,
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
+  },
+  { _id: false }
+);
 
 const orderSchema = new mongoose.Schema(
   {
-    customer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-
-    orderItems: {
-      type: [orderItemSchema],
-      validate: [arr => arr.length > 0, 'Đơn hàng phải có ít nhất 1 sản phẩm'],
+    customer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
     },
-
-    shippingInfo: {
-      provider: { type: String, required: true },
-      shippingFee: { type: Number, required: true, default: 0, min: [0, 'Phí ship không được âm'] },
+    orderItems: [orderItemSchema],
+    shippingAddress: {
+      address: { type: String, required: true },
+      city: { type: String, required: true },
+      postalCode: { type: String, required: true },
+      country: { type: String, required: true },
     },
-
-    paymentInfo: {
-      method: { type: String, default: 'VNPAY', enum: ['VNPAY', 'COD'] },
-      status: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },
-      paidAt: { type: Date },
+    paymentMethod: {
+      type: String,
+      enum: ['cash_on_delivery', 'credit_card', 'paypal'],
+      required: true,
     },
-
-    totalPrice: { type: Number, required: true, min: [0, 'Tổng tiền không được âm'] },
-
-    commissionInfo: {
-      commissionAmount: { type: Number, required: true, default: 0, min: [0, 'Hoa hồng không được âm'] },
-      revenueAmount: { type: Number, required: true, default: 0, min: [0, 'Doanh thu không được âm'] },
-      status: { type: String, enum: ['pending', 'paid_out'], default: 'pending' },
+    totalPrice: {
+      type: Number,
+      required: true,
     },
-
     orderStatus: {
       type: String,
       enum: ['pending_payment', 'processing', 'shipped', 'completed', 'cancelled'],
       default: 'pending_payment',
     },
+    deliveredAt: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );
-
-// Tự động tính totalPrice
-orderSchema.pre('validate', function (next) {
-  const itemsTotal = this.orderItems.reduce((acc, item) => acc + item.subtotal, 0);
-  this.totalPrice = itemsTotal + (this.shippingInfo?.shippingFee || 0);
-  next();
-});
-
-// Index để truy vấn nhanh
-orderSchema.index({ customer: 1 });
-orderSchema.index({ 'orderItems.shop': 1 });
 
 module.exports = mongoose.model('Order', orderSchema);

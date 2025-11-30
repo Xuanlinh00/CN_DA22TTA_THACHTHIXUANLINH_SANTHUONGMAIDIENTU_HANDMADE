@@ -1,44 +1,34 @@
-import React from 'react';
-import '../css/Policy.css';
+import React from "react";
+import "../css/Policy.css";
 
 const Policy = () => {
   return (
     <div className="policy-container">
-      <h1 className="policy-title">Chính sách của Handmade Shop</h1>
-      <div className="policy-section">
-        <h2>1. Chính sách mua hàng</h2>
-        <p>
-          Khách hàng có thể đặt mua sản phẩm trực tuyến qua website. Mọi đơn hàng sẽ được xác nhận qua email hoặc điện thoại.
-        </p>
-      </div>
+      <h2 className="page-title">Chính Sách & Điều Khoản</h2>
 
-      <div className="policy-section">
-        <h2>2. Chính sách giao hàng</h2>
+      <section className="policy-section">
+        <h3>Chính Sách Bảo Mật</h3>
         <p>
-          Chúng tôi giao hàng toàn quốc trong vòng 3-5 ngày làm việc. Phí vận chuyển sẽ được tính tùy khu vực.
+          CRAFTIFY cam kết bảo mật thông tin cá nhân của khách hàng. 
+          Dữ liệu sẽ chỉ được sử dụng cho mục đích giao dịch và chăm sóc khách hàng.
         </p>
-      </div>
+      </section>
 
-      <div className="policy-section">
-        <h2>3. Chính sách đổi trả</h2>
+      <section className="policy-section">
+        <h3>Điều Khoản Sử Dụng</h3>
         <p>
-          Sản phẩm được phép đổi trả trong vòng 7 ngày kể từ khi nhận hàng nếu có lỗi từ nhà sản xuất.
+          Khi sử dụng dịch vụ của CRAFTIFY, bạn đồng ý tuân thủ các quy định về mua bán, 
+          không đăng tải sản phẩm vi phạm pháp luật hoặc bản quyền.
         </p>
-      </div>
+      </section>
 
-      <div className="policy-section">
-        <h2>4. Chính sách bảo hành</h2>
+      <section className="policy-section">
+        <h3>Chính Sách Đổi Trả</h3>
         <p>
-          Một số sản phẩm handmade có chế độ bảo hành riêng. Vui lòng liên hệ bộ phận chăm sóc khách hàng để biết thêm chi tiết.
+          Khách hàng có thể đổi trả sản phẩm trong vòng 7 ngày kể từ khi nhận hàng, 
+          với điều kiện sản phẩm còn nguyên vẹn và chưa qua sử dụng.
         </p>
-      </div>
-
-      <div className="policy-section">
-        <h2>5. Chính sách bảo mật</h2>
-        <p>
-          Handmade Shop cam kết bảo mật thông tin cá nhân của khách hàng và không chia sẻ cho bên thứ ba.
-        </p>
-      </div>
+      </section>
     </div>
   );
 };
