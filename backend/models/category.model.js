@@ -4,9 +4,11 @@ const categorySchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
-      unique: true,
+      required: [true, 'Tên danh mục là bắt buộc'],
       trim: true,
+      unique: true,
+      minlength: [2, 'Tên danh mục phải có ít nhất 2 ký tự'],
+      maxlength: [50, 'Tên danh mục không được vượt quá 50 ký tự'],
     },
     slug: {
       type: String,
@@ -15,15 +17,10 @@ const categorySchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    description: {
-      type: String,
-      default: '',
-    },
   },
-  { timestamps: true }
+  {
+    timestamps: true, // tự động thêm createdAt, updatedAt
+  }
 );
 
-
-
-const Category = mongoose.model('Category', categorySchema);
-module.exports = Category;
+module.exports = mongoose.model('Category', categorySchema);

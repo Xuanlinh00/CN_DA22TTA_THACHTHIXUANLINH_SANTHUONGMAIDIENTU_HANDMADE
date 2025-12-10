@@ -1,41 +1,79 @@
-import React, { useEffect, useState } from "react";
-import "../css/ProductList.css";
+import { useEffect, useState } from 'react';
+import api from '@/utils/api';
+import ProductCard from '@/components/jsx/ProductCard';
+import Loader from '@/components/jsx/Loader';
 
-const ProductList = () => {
+export default function ProductList() {
   const [products, setProducts] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
+  const [keyword, setKeyword] = useState('');
+  const [category, setCategory] = useState('');
+  const [categories, setCategories] = useState([]);
+
+  const fetchProducts = async (page = 1) => {
+    const qs = new URLSearchParams({ page, limit: 12, ...(keyword ? { keyword } : {}), ...(category ? { category } : {}) });
+    const res = await api.get(`/api/products?${qs.toString()}`);
+    setProducts(res?.data?.data || []);
+    setPagination(res?.data?.pagination || { page: 1, pages: 1, total: 0 });
+  };
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/products")
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) setProducts(data.data);
-      })
-      .catch(err => console.error(err));
+    (async () => {
+      const res = await api.get('/api/categories');
+      setCategories(res?.data?.data || []);
+      fetchProducts(1);
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => { fetchProducts(1); }, [keyword, category]);
+
   return (
-    <div className="product-list-container">
-      <h2 className="page-title">Danh Sách Sản Phẩm</h2>
-      <div className="products-grid">
-        {products.map((p) => (
-          <div className="product-card" key={p._id}>
-            <div className="product-image">
-              <img src={p.image} alt={p.name} />
-              {p.isHot && <span className="product-badge">Hot</span>}
-            </div>
-            <div className="product-info">
-              <h3 className="product-title">{p.name}</h3>
-              <div className="product-price">{p.price}đ</div>
-              <div className="product-actions">
-                <a href={`/product/${p._id}`} className="btn-orange">Xem Chi Tiết</a>
-                <button className="btn-cart">Thêm vào giỏ</button>
-              </div>
-            </div>
-          </div>
-        ))}
+    <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="flex flex-col md:flex-row gap-3 mb-4">
+        <input
+          className="border rounded px-3 py-2 w-full md:w-1/2"
+          placeholder="Tìm kiếm sản phẩm..."
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+        />
+        <select
+          className="border rounded px-3 py-2 w-full md:w-1/4"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
+          <option value="">Tất cả danh mục</option>
+          {categories.map(c => (
+            <option key={c._id} value={c.slug || c.name}>{c.name}</option>
+          ))}
+        </select>
       </div>
+
+      {!products ? <Loader /> : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {products.map(p => <ProductCard key={p._id} product={p} />)}
+          </div>
+
+          <div className="flex items-center justify-center gap-2 mt-6">
+            <button
+              className="px-3 py-1 border rounded disabled:opacity-50"
+              onClick={() => fetchProducts(pagination.page - 1)}
+              disabled={pagination.page <= 1}
+            >
+              Trước
+            </button>
+            <span>Trang {pagination.page}/{pagination.pages}</span>
+            <button
+              className="px-3 py-1 border rounded disabled:opacity-50"
+              onClick={() => fetchProducts(pagination.page + 1)}
+              disabled={pagination.page >= pagination.pages}
+            >
+              Sau
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
-};
-
-export default ProductList;
+}

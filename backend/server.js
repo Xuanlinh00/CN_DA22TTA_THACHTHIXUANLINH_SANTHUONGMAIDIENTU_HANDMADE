@@ -1,5 +1,3 @@
-// server.js
-
 // 1. Import các thư viện
 const express = require('express');
 const mongoose = require('mongoose');
@@ -9,88 +7,85 @@ const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const helmet = require('helmet');
 
-// 2. Cấu hình
+// 2. Load biến môi trường
 dotenv.config();
 const app = express();
 
-// 3. Lấy env
+// 3. Lấy biến từ .env
 const PORT = process.env.PORT || 8000;
 const MONGO_URI = process.env.MONGO_URI;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
-// Cảnh báo nếu thiếu MONGO_URI
+// 4. Kiểm tra kết nối MongoDB
 if (!MONGO_URI) {
-  console.error('Thiếu MONGO_URI trong .env – vui lòng cấu hình trước khi chạy server');
+  console.error('❌ Thiếu MONGO_URI trong .env – vui lòng cấu hình');
   process.exit(1);
 }
 
-// 4. Middleware bảo mật & tiện ích
+// 5. Middleware bảo mật & tiện ích
 app.use(helmet());
 app.use(morgan('dev'));
+app.use(cookieParser());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
-// ❗ Bật CORS với credentials để dùng cookie JWT (SameSite=Lax/None tùy HTTPS)
+// 6. Cấu hình CORS cho frontend
 app.use(cors({
-  origin: CLIENT_URL,
-  credentials: true
+  origin: CLIENT_URL,           // nhớ là http://localhost:5173 trong .env
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  optionsSuccessStatus: 204     // tránh một số trình duyệt phàn nàn
 }));
 
-// Parsing body và cookie
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+// XÓA: app.options('*', cors());
+// Nếu cần preflight riêng cho API:
+//app.options('/api/*', cors());
 
-// Nếu deploy sau này (behind proxy) để set cookie chính xác
+// 7. Nếu deploy sau này (behind proxy như Nginx)
 app.set('trust proxy', 1);
 
-// 5. Kết nối MongoDB
-mongoose.connect(MONGO_URI, { autoIndex: true })
+// 8. Kết nối MongoDB
+mongoose.connect(MONGO_URI)
   .then(() => {
-    console.log('ĐÃ KẾT NỐI THÀNH CÔNG ĐẾN MONGODB!');
+    console.log('✅ Kết nối MongoDB thành công');
     app.listen(PORT, () => {
-      console.log(`Server đang chạy trên cổng ${PORT}`);
-      console.log(`CORS cho front-end: ${CLIENT_URL}`);
+      console.log(`🚀 Server chạy tại http://localhost:${PORT}`);
+      console.log(`🔗 CORS cho phép từ: ${CLIENT_URL}`);
     });
   })
   .catch(err => {
-    console.error('LỖI KẾT NỐI MONGODB:', err.message);
+    console.error('❌ Lỗi kết nối MongoDB:', err.message);
     process.exit(1);
   });
 
-// 6. Routes cơ bản
+// 9. Route kiểm tra
 app.get('/', (req, res) => {
-  res.send('Chào mừng đến với Back-end Sàn Handmade!');
+  res.send('🧵 API Craftify Handmade đang hoạt động...');
 });
 
-// Import routes
-const userRoutes = require('./routes/user.routes.js');
-const shopRoutes = require('./routes/shop.routes.js');
-const adminRoutes = require('./routes/admin.routes.js');
-const productRoutes = require('./routes/product.routes.js');
-const categoryRoutes = require('./routes/category.routes.js');
-const cartRoutes = require('./routes/cart.routes.js');
-const orderRoutes = require('./routes/order.routes.js');
+// 10. Import routes
+app.use('/api/auth', require('./routes/auth.routes'));
+app.use('/api/products', require('./routes/product.routes'));
+app.use('/api/cart', require('./routes/cart.routes'));
+app.use('/api/orders', require('./routes/order.routes'));
+app.use('/api/shops', require('./routes/shop.routes'));
+app.use('/api/categories', require('./routes/category.routes'));
+app.use('/api/admin', require('./routes/admin.routes'));
+app.use('/api/payment', require('./routes/payment.routes'));
 
-// Mount routes
-app.use('/api/users', userRoutes);
-app.use('/api/shops', shopRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/cart', cartRoutes);
-app.use('/api/orders', orderRoutes);
-
-// 7. 404 và xử lý lỗi chung
+// 11. Xử lý lỗi 404
 app.use((req, res, next) => {
-  res.status(404).json({
-    success: false,
-    error: 'Không tìm thấy endpoint'
-  });
+  const error = new Error(`Không tìm thấy endpoint: ${req.originalUrl}`);
+  error.status = 404;
+  next(error);
 });
 
+// 12. Global Error Handler
 app.use((err, req, res, next) => {
-  console.error('ERROR:', err);
+  console.error('🔥 ERROR:', err.message);
   res.status(err.status || 500).json({
     success: false,
-    error: err.message || 'Lỗi máy chủ nội bộ'
+    message: err.message || 'Lỗi máy chủ nội bộ',
+    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
   });
 });

@@ -1,7 +1,7 @@
 const Shop = require('../models/shop.model.js');
 const User = require('../models/user.model.js');
 const Order = require('../models/order.model.js');
-
+const { validationResult } = require('express-validator'); // Cài npm i express-validator
 // quản lý shop
 // Lấy tất cả shop đang chờ duyệt
 const getPendingShops = async (req, res) => {
@@ -126,7 +126,22 @@ const updateUserRole = async (req, res) => {
   }
 };
 
+// Tính hoa hồng (commission) cho admin
+const calculateCommission = async (req, res) => {
+  try {
+    const completedOrders = await Order.find({ orderStatus: 'completed' });
+    const totalRevenue = completedOrders.reduce((sum, order) => sum + order.totalPrice, 0);
+    const commissionRate = 0.1; // 10%
+    const commission = totalRevenue * commissionRate;
 
+    res.status(200).json({
+      success: true,
+      data: { totalRevenue, commission },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Không thể tính hoa hồng: ' + error.message });
+  }
+};
 
 const getRevenueStats = async (req, res) => {
   try {
@@ -171,4 +186,5 @@ module.exports = {
   // Stats
   getRevenueStats,
   getOrderStats,
+calculateCommission,
 };

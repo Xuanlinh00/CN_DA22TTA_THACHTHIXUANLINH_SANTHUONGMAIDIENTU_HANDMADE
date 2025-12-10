@@ -1,0 +1,49 @@
+/* src/index.css – FILE DUY NHẤT, ĐẸP NHƯ ESTY, DỄ SỬA NHƯ FILE LẺ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #FFFCFA;
+  color: #2D1E1E;
+  line-height: 1.6;
+}
+
+/* TONE CAM HOÀN HẢO */
+:root {
+  --cam-1: #FF853F;   /* Cam chủ đạo – đẹp nhất */
+  --cam-2: #FF6B35;   /* Hover */
+  --nau:   #2D1E1E;
+  --be:    #FFFCFA;
+  --vien:  #FFE8D6;
+}
+
+/* NÚT ĐẸP NHƯ CỬA HÀNG CAO CẤP */
+.btn-cam {
+  @apply bg-[var(--cam-1)] hover:bg-[var(--cam-2)] text-white font-bold py-4 px-10 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105;
+}
+
+.btn-vien-cam {
+  @apply border-2 border-[var(--cam-1)] text-[var(--cam-1)] hover:bg-[var(--cam-1)] hover:text-white font-bold py-4 px-10 rounded-xl transition-all duration-300;
+}
+
+/* CARD SIÊU ĐẸP */
+.card {
+  @apply bg-white rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl hover:-translate-y-3 transition-all duration-500 border border-[var(--vien)];
+}
+
+/* NAVBAR & FOOTER */
+.navbar { @apply bg-[#2D1E1E] text-white sticky top-0 z-50 shadow-2xl; }
+.footer { @apply bg-[#2D1E1E] text-white py-20; }
+
+/* ANIMATION */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fadeIn 0.6s ease-out; }

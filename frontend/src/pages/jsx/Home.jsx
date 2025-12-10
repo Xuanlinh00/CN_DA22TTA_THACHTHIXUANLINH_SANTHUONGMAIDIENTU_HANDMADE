@@ -1,55 +1,33 @@
-import React, { useEffect, useState } from "react";
-import Layout from "../../components/jsx/Layout";
-import "../css/Home.css";
+import { useEffect, useState } from 'react';
+import api from '@/utils/api';
+import ProductCard from '@/components/jsx/ProductCard';
+import Loader from '@/components/jsx/Loader';
 
-const Home = () => {
+export default function Home() {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading]   = useState(false);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/products`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) setProducts(data.data);
-      })
-      .catch(err => console.error(err));
+    const load = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get('/api/products?limit=12');
+        setProducts(res?.data?.data || []);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
   }, []);
 
   return (
-    <Layout>
-      <section className="hero">
-        {/* Hero content như bạn đã viết */}
-      </section>
-
-      <section className="categories">
-        {/* Categories như bạn đã viết */}
-      </section>
-
-      <section className="products">
-        <div className="section-header">
-          <span className="section-tag">Sản Phẩm</span>
-          <h2 className="section-title">Sản Phẩm Nổi Bật</h2>
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-semibold mb-4">Sản phẩm nổi bật</h1>
+      {loading ? <Loader /> : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {products.map(p => <ProductCard key={p._id} product={p} />)}
         </div>
-        <div className="products-grid">
-          {products.map((p) => (
-            <div className="product-card" key={p._id}>
-              <div className="product-image">
-                <img src={p.image} alt={p.name} />
-                <span className="product-badge">Hot</span>
-              </div>
-              <div className="product-info">
-                <h3 className="product-title">{p.name}</h3>
-                <div className="product-price">{p.price}đ</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="cta-section">
-        {/* CTA như bạn đã viết */}
-      </section>
-    </Layout>
+      )}
+    </div>
   );
-};
-
-export default Home;
+}

@@ -1,49 +1,64 @@
 const express = require('express');
 const router = express.Router();
+
+// 1. Import Controllers
 const {
   registerUser,
   loginUser,
   logoutUser,
   getProfile,
   updateProfile,
-} = require('../controllers/user.controller'); // Import Controller
-const { protect, authorize } = require('../middleware/auth.middleware');
+  forgotPassword,
+  resetPassword,
+  getAllUsers, // Admin
+  deleteUser   // Admin
+} = require('../controllers/user.controller');
+
+// 2. Import Middleware
+const { protect, admin } = require('../middleware/auth.middleware');
+
+// --- PUBLIC ROUTES (Không cần đăng nhập) ---
 
 // @route   POST /api/users/register
-// @desc    Đăng ký tài khoản mới
-
+// @desc    Đăng ký tài khoản
 router.post('/register', registerUser);
 
 // @route   POST /api/users/login
-// @desc    Đăng nhập và nhận token
-
+// @desc    Đăng nhập
 router.post('/login', loginUser);
 
-// @route   POST /api/users/logout
-// @desc    Đăng xuất (xóa cookie chứa JWT)
+// @route   POST /api/users/forgot-password
+// @desc    Gửi email reset password
+router.post('/forgot-password', forgotPassword);
 
+// @route   PUT /api/users/reset-password/:token
+// @desc    Đặt lại mật khẩu mới (kèm token)
+router.put('/reset-password/:token', resetPassword);
+
+
+// --- PRIVATE ROUTES (Cần đăng nhập) ---
+
+// @route   POST /api/users/logout
+// @desc    Đăng xuất
 router.post('/logout', protect, logoutUser);
 
 // @route   GET /api/users/profile
-// @desc    Lấy thông tin cá nhân của user
-
+// @desc    Xem thông tin cá nhân
 router.get('/profile', protect, getProfile);
 
 // @route   PUT /api/users/profile
-// @desc    Cập nhật thông tin cá nhân của user
-
+// @desc    Cập nhật thông tin cá nhân
 router.put('/profile', protect, updateProfile);
 
-// @route   GET /api/users
-// @desc    Admin lấy danh sách tất cả người dùng
 
-router.get('/', protect, authorize('admin'), async (req, res) => {
-  try {
-    const users = await require('../models/user.model').find().select('-password');
-    res.status(200).json(users);
-  } catch (error) {
-    res.status(500).json({ message: 'Không thể lấy danh sách người dùng' });
-  }
-});
+// --- ADMIN ROUTES (Cần quyền Admin) ---
+
+// @route   GET /api/users
+// @desc    Lấy danh sách tất cả user
+router.get('/', protect, admin, getAllUsers);
+
+// @route   DELETE /api/users/:id
+// @desc    Xoá người dùng theo ID
+router.delete('/:id', protect, admin, deleteUser);
 
 module.exports = router;

@@ -1,53 +1,54 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/user.model');
+const jwt = require("jsonwebtoken");
+const User = require("../models/user.model");
 
-// Middleware: Xác thực người dùng qua JWT
 const protect = async (req, res, next) => {
-  const token = req.cookies?.jwt;
+  let token;
+
+  if (req.headers.authorization?.startsWith("Bearer")) {
+    token = req.headers.authorization.split(" ")[1];
+  } else if (req.cookies?.jwt) {
+    token = req.cookies.jwt;
+  }
 
   if (!token) {
-    return res.status(401).json({ message: 'Không có token, truy cập bị từ chối' });
+    return res.status(401).json({ message: "Bạn chưa đăng nhập." });
   }
 
   try {
-    // Giải mã token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Lấy thông tin user từ DB
-    const user = await User.findById(decoded.userId).select('-password');
+    const user = await User.findById(decoded.userId).select("-password");
     if (!user) {
-      return res.status(404).json({ message: 'Người dùng không tồn tại' });
+      return res.status(401).json({ message: "Token không hợp lệ hoặc user không tồn tại." });
+    }
+
+    if (["banned", "inactive"].includes(user.status)) {
+      return res.status(403).json({ message: "Tài khoản bị khoá hoặc chưa kích hoạt." });
     }
 
     req.user = user;
     next();
-  } catch (error) {
-    console.error('Lỗi xác thực token:', error.message);
-    return res.status(401).json({ message: 'Token không hợp lệ, truy cập bị từ chối' });
+  } catch (err) {
+    console.error("Lỗi xác thực token:", err.message);
+    return res.status(401).json({ message: "Token hết hạn hoặc không hợp lệ." });
   }
 };
 
-// Middleware: Kiểm tra quyền admin
-const admin = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
-    next();
-  } else {
-    return res.status(403).json({ message: 'Chỉ admin mới được phép' });
-  }
-};
-
-// Middleware: Kiểm tra theo nhiều vai trò (nếu cần)
+// Thêm hàm authorize ở đây
 const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'Không có quyền truy cập' });
+    if (!req.user) {
+      return res.status(401).json({ message: "Không xác thực được người dùng." });
     }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ 
+        message: `Vai trò ${req.user.role} không có quyền thực hiện hành động này. Yêu cầu vai trò: ${roles.join(", ")}` 
+      });
+    }
+
     next();
   };
 };
 
-module.exports = {
-  protect,
-  admin,
-  authorize,
-};
+module.exports = { protect, authorize };  // Export cả hai

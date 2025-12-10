@@ -1,144 +1,255 @@
 const Product = require('../models/product.model');
-const Shop = require('../models/shop.model');
-const Category = require('../models/category.model');
 
-// @desc    Vendor (Chủ shop) tạo một sản phẩm mới
-// @route   POST /api/products
-// @access  Private (Vendor)
-const createProduct = async (req, res) => {
-  try {
-    const { name, description, price, categoryId, stockQuantity, image, material } = req.body;
-    const userId = req.user._id;
-
-    const shop = await Shop.findOne({ user: userId });
-    if (!shop) {
-      return res.status(404).json({ message: 'Không tìm thấy gian hàng của bạn' });
-    }
-
-    if (shop.status !== 'active') {
-      return res.status(403).json({ message: 'Gian hàng của bạn chưa được duyệt. Không thể đăng sản phẩm' });
-    }
-
-    const categoryExists = await Category.findById(categoryId);
-    if (!categoryExists) {
-      return res.status(400).json({ message: 'Danh mục (Category) không hợp lệ' });
-    }
-
-    const product = await Product.create({
-      user: userId,
-      shop: shop._id,
-      name: name.trim(),
-      description: description.trim(),
-      price,
-      category: categoryId,
-      stockQuantity,
-      image: image || '/images/default-product.png',
-      material: material || '',
-    });
-
-    res.status(201).json(product);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
-// @desc    Lấy tất cả sản phẩm (cho Khách hàng)
-// @route   GET /api/products
-// @access  Public
+// --- 1. LẤY TẤT CẢ SẢN PHẨM (Có Lọc & Phân trang) ---
+// @route GET /api/products?keyword=abc&page=1&category=...
 const getProducts = async (req, res) => {
   try {
-    const activeShops = await Shop.find({ status: 'active' }).select('_id');
-    const activeShopIds = activeShops.map(shop => shop._id);
+    // 1. Xử lý tìm kiếm theo tên (keyword)
+    const keyword = req.query.keyword
+      ? {
+          name: {
+            $regex: req.query.keyword,
+            $options: 'i', // 'i' để không phân biệt hoa thường
+          },
+        }
+      : {};
 
-    const products = await Product.find({ shop: { $in: activeShopIds } })
-      .populate('shop', 'shopName')
-      .populate('category', 'name');
+    // 2. Xử lý lọc theo danh mục
+    const categoryQuery = req.query.category ? { category: req.query.category } : {};
 
-    res.status(200).json(products);
+    // 3. Phân trang
+    const pageSize = Number(req.query.limit) || 10;
+    const page = Number(req.query.page) || 1;
+
+    // Tổng hợp query
+    const query = { ...keyword, ...categoryQuery };
+
+    const count = await Product.countDocuments(query);
+    const products = await Product.find(query)
+      .populate('shop', 'shopName') // Hiện tên shop bán
+      .limit(pageSize)
+      .skip(pageSize * (page - 1))
+      .sort({ createdAt: -1 }); // Mới nhất lên đầu
+
+    res.json({
+      success: true,
+      data: products,
+      pagination: {
+        page,
+        pages: Math.ceil(count / pageSize),
+        total: count
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi server: ' + error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// @desc    Lấy 1 sản phẩm bằng ID (cho Khách hàng)
-// @route   GET /api/products/:id
-// @access  Public
+// --- 2. LẤY CHI TIẾT SẢN PHẨM ---
 const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate('shop', 'shopName status')
-      .populate('category', 'name');
+      .populate('shop', 'shopName avatar')
+      .populate('reviews.user', 'name avatar') // Hiện info người review
+      .populate('questions.user', 'name'); // Hiện info người hỏi
 
     if (!product) {
-      return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
+      return res.status(404).json({ success: false, message: 'Sản phẩm không tồn tại' });
     }
 
-    if (product.shop.status !== 'active') {
-      return res.status(403).json({ message: 'Gian hàng này chưa được duyệt' });
-    }
-
-    res.status(200).json(product);
+    res.json({ success: true, data: product });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// @desc    Vendor cập nhật sản phẩm của mình
-// @route   PUT /api/products/:id
-// @access  Private (Vendor)
+// --- 3. TẠO SẢN PHẨM (Admin/Vendor) ---
+const createProduct = async (req, res) => {
+  try {
+    const { name, price, description, image, category, countInStock, shop } = req.body;
+
+    const product = new Product({
+      name,
+      price,
+      user: req.user._id, // Người tạo (Vendor/Admin)
+      shop: shop || req.user.shop, // Nếu user là vendor thì lấy shop của họ
+      image,
+      category,
+      countInStock,
+      description,
+    });
+
+    const createdProduct = await product.save();
+    res.status(201).json({ success: true, data: createdProduct });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// --- 4. CẬP NHẬT SẢN PHẨM ---
 const updateProduct = async (req, res) => {
   try {
+    const { name, price, description, image, category, countInStock } = req.body;
+
     const product = await Product.findById(req.params.id);
 
     if (!product) {
-      return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
+      return res.status(404).json({ success: false, message: 'Sản phẩm không tồn tại' });
     }
 
-    // Chỉ cho phép vendor chỉnh sửa sản phẩm của chính mình
-    if (product.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Bạn không có quyền chỉnh sửa sản phẩm này' });
+    // Check quyền: Chỉ chủ shop hoặc Admin mới được sửa
+    if (product.user.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Bạn không có quyền sửa sản phẩm này' });
     }
 
-    const fields = ['name', 'description', 'price', 'stockQuantity', 'image', 'material', 'category'];
-    fields.forEach(field => {
-      if (req.body[field] !== undefined) {
-        product[field] = req.body[field];
-      }
-    });
+    product.name = name || product.name;
+    product.price = price || product.price;
+    product.description = description || product.description;
+    product.image = image || product.image;
+    product.category = category || product.category;
+    product.countInStock = countInStock || product.countInStock;
 
     const updatedProduct = await product.save();
-    res.status(200).json(updatedProduct);
+    res.json({ success: true, data: updatedProduct });
   } catch (error) {
-    res.status(500).json({ message: 'Không thể cập nhật sản phẩm' });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// @desc    Vendor xóa sản phẩm của mình
-// @route   DELETE /api/products/:id
-// @access  Private (Vendor)
+// --- 5. XOÁ SẢN PHẨM ---
 const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
 
     if (!product) {
-      return res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
+      return res.status(404).json({ success: false, message: 'Sản phẩm không tồn tại' });
     }
 
-    if (product.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Bạn không có quyền xóa sản phẩm này' });
+    // Check quyền
+    if (product.user.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Bạn không có quyền xoá sản phẩm này' });
     }
 
-    await product.remove();
-    res.status(200).json({ message: 'Xóa sản phẩm thành công' });
+    await product.deleteOne();
+    res.json({ success: true, message: 'Đã xoá sản phẩm thành công' });
   } catch (error) {
-    res.status(500).json({ message: 'Không thể xóa sản phẩm' });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
+// --- 6. THÊM ĐÁNH GIÁ (REVIEW) ---
+const addReview = async (req, res) => {
+  try {
+    const { rating, comment } = req.body;
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Sản phẩm không tìm thấy' });
+    }
+
+    // Kiểm tra xem user đã review chưa (Mỗi người chỉ review 1 lần)
+    const alreadyReviewed = product.reviews.find(
+      (r) => r.user.toString() === req.user._id.toString()
+    );
+
+    if (alreadyReviewed) {
+      return res.status(400).json({ success: false, message: 'Bạn đã đánh giá sản phẩm này rồi' });
+    }
+
+    // Tạo object review
+    const review = {
+      name: req.user.name,
+      rating: Number(rating),
+      comment,
+      user: req.user._id,
+      createdAt: Date.now()
+    };
+
+    // Thêm vào mảng reviews
+    product.reviews.push(review);
+
+    // Cập nhật lại số lượng review và điểm trung bình
+    product.numReviews = product.reviews.length;
+    product.rating =
+      product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+      product.reviews.length;
+
+    await product.save();
+    res.status(201).json({ success: true, message: 'Đánh giá đã được thêm' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// --- 7. THÊM CÂU HỎI (QUESTION) ---
+const addQuestion = async (req, res) => {
+  try {
+    const { question } = req.body;
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Sản phẩm không tìm thấy' });
+    }
+
+    if (!question) {
+        return res.status(400).json({ success: false, message: 'Vui lòng nhập nội dung câu hỏi' });
+    }
+
+    const newQuestion = {
+      user: req.user._id,
+      name: req.user.name,
+      question: question,
+      createdAt: Date.now(),
+      answers: [] // Khởi tạo mảng trả lời trống
+    };
+
+    product.questions.push(newQuestion);
+    await product.save();
+
+    res.status(201).json({ success: true, message: 'Câu hỏi đã được gửi', data: newQuestion });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// --- 8. (Optional) TRẢ LỜI CÂU HỎI (Cho Vendor/Admin) ---
+// Nếu bạn muốn phát triển thêm: Cho phép chủ shop trả lời câu hỏi của khách
+const answerQuestion = async (req, res) => {
+    try {
+        const { answer } = req.body;
+        const { questionId } = req.params; // ID của câu hỏi nằm trong URL
+        const productId = req.params.id;   // ID của sản phẩm
+
+        const product = await Product.findById(productId);
+        if (!product) return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
+
+        // Tìm câu hỏi trong mảng questions
+        const question = product.questions.id(questionId);
+        if(!question) return res.status(404).json({ message: 'Câu hỏi không tồn tại' });
+
+        // Thêm câu trả lời
+        question.answers.push({
+            user: req.user._id,
+            name: req.user.name, // Thường là Shop Name
+            answer: answer,
+            createdAt: Date.now()
+        });
+
+        await product.save();
+        res.status(200).json({ success: true, message: 'Đã trả lời câu hỏi' });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 module.exports = {
-  createProduct,
   getProducts,
   getProductById,
+  createProduct,
   updateProduct,
   deleteProduct,
+  addReview,
+  addQuestion,
+  answerQuestion // Export thêm nếu dùng
 };

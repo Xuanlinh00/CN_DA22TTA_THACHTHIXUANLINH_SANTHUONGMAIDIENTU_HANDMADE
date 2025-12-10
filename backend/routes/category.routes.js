@@ -1,15 +1,23 @@
 const express = require('express');
 const router = express.Router();
+
 const {
-    createCategory,
-    getCategories,
-} = require('../controllers/category.controller.js');
-const { protect, admin } = require('../middleware/auth.middleware.js');
+  getCategories,
+  getCategoryById,
+  createCategory,
+  updateCategory,
+  deleteCategory
+} = require('../controllers/category.controller');
 
-// @route   POST /api/categories (Chỉ Admin được tạo)
-router.post('/', protect, admin, createCategory);
+const { protect, authorize } = require('../middleware/auth.middleware');
 
-// @route   GET /api/categories (Ai cũng xem được)
+// PUBLIC ROUTES - Không cần login
 router.get('/', getCategories);
+router.get('/id', getCategoryById);
+
+// ADMIN ROUTES - Chỉ admin
+router.post('/', protect, authorize('admin'), createCategory);
+router.put('/:id', protect, authorize('admin'), updateCategory);
+router.delete('/:id', protect, authorize('admin'), deleteCategory);
 
 module.exports = router;

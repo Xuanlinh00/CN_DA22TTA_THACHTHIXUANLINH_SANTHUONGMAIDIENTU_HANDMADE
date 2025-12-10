@@ -1,74 +1,41 @@
-import React, { useEffect, useState } from "react";
-import LayoutVendor from "../../components/jsx/LayoutVendor"; // dùng layout riêng
-import "../css/VendorDashboard.css";
+// src/pages/jsx/VendorDashboard.jsx
+import React from "react";
+import { Link } from "react-router-dom";
 
 const VendorDashboard = () => {
-  const [products, setProducts] = useState([]);
-  const [form, setForm] = useState({ name: "", price: "", image: "" });
-
-  useEffect(() => {
-    fetch("http://localhost:5000/api/vendor/products")
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) setProducts(data.data);
-      })
-      .catch(err => console.error(err));
-  }, []);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    fetch("http://localhost:5000/api/vendor/products", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          alert("Thêm sản phẩm thành công!");
-          setProducts([...products, data.data]);
-        }
-      });
-  };
-
   return (
-    <LayoutVendor>
-      <div className="vendor-dashboard">
-        <h2 className="page-title">Quản Lý Người Bán</h2>
+    <div className="p-8">
+      <h1 className="text-4xl font-bold text-[#2D1E1E]">Chào mừng quay lại, Nghệ nhân!</h1>
+      <p className="text-xl text-gray-700 mt-2">Xưởng Linh Handmade</p>
 
-        <form onSubmit={handleSubmit} className="vendor-form">
-          <input
-            type="text"
-            placeholder="Tên sản phẩm"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
-          <input
-            type="number"
-            placeholder="Giá"
-            value={form.price}
-            onChange={(e) => setForm({ ...form, price: e.target.value })}
-          />
-          <input
-            type="text"
-            placeholder="Link ảnh"
-            value={form.image}
-            onChange={(e) => setForm({ ...form, image: e.target.value })}
-          />
-          <button type="submit" className="btn-orange">Thêm Sản Phẩm</button>
-        </form>
-
-        <div className="products-grid">
-          {products.map((p) => (
-            <div className="product-card" key={p._id}>
-              <img src={p.image} alt={p.name} />
-              <h3>{p.name}</h3>
-              <p>{p.price}đ</p>
-            </div>
-          ))}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-10">
+        <div className="bg-white p-8 rounded-2xl shadow text-center">
+          <p className="text-4xl font-bold text-[#FF6B35]">24</p>
+          <p className="mt-2 text-gray-700">Đơn hàng mới</p>
+        </div>
+        <div className="bg-white p-8 rounded-2xl shadow text-center">
+          <p className="text-4xl font-bold text-[#FF6B35]">156</p>
+          <p className="mt-2 text-gray-700">Sản phẩm đang bán</p>
+        </div>
+        <div className="bg-white p-8 rounded-2xl shadow text-center">
+          <p className="text-4xl font-bold text-[#FF6B35]">8.2M</p>
+          <p className="mt-2 text-gray-700">Doanh thu tháng</p>
+        </div>
+        <div className="bg-white p-8 rounded-2xl shadow text-center">
+          <p className="text-4xl font-bold text-[#FF6B35]">4.9 ★</p>
+          <p className="mt-2 text-gray-700">Đánh giá cửa hàng</p>
         </div>
       </div>
-    </LayoutVendor>
+
+      <div className="mt-12 flex gap-6">
+        <Link to="/vendor/add-product" className="bg-[#FF6B35] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#e55a2b] shadow-lg">
+          + Thêm sản phẩm mới
+        </Link>
+        <Link to="/vendor/orders" className="border-2 border-[#FF6B35] text-[#FF6B35] px-8 py-4 rounded-xl font-bold hover:bg-[#FF6B35] hover:text-white">
+          Xem đơn hàng
+        </Link>
+      </div>
+    </div>
   );
 };
 

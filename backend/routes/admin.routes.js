@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, admin } = require('../middleware/auth.middleware.js');
+const { protect, authorize } = require('../middleware/auth.middleware.js');  // Sửa import: authorize thay vì admin
 const {
   // Shop
   getPendingShops,
@@ -16,8 +16,8 @@ const {
   getOrderStats,
 } = require('../controllers/admin.controller.js');
 
-// Áp dụng middleware cho tất cả route
-router.use(protect, admin);
+// Áp dụng middleware cho tất cả route admin: protect + chỉ cho phép role 'admin'
+router.use(protect, authorize('admin'));
 
 // Shop management
 router.get('/pending-shops', getPendingShops);

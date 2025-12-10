@@ -1,62 +1,30 @@
 const mongoose = require('mongoose');
 
-const shopSchema = new mongoose.Schema(
-  {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      ref: 'User',
-      unique: true,
-    },
-    shopName: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
-    description: {
-      type: String,
-      required: true,
-    },
-    address: {
-      type: String,
-      required: true,
-    },
-    phone: {
-      type: String,
-      required: true,
-    },
-    email: {
-      type: String,
-      match: [/.+\@.+\..+/, 'Email không hợp lệ'],
-    },
-    avatar: {
-      type: String,
-      default: '/images/default-shop-avatar.png',
-    },
-    coverImage: {
-      type: String,
-      default: '/images/default-shop-cover.png',
-    },
-    status: {
-      type: String,
-      enum: ['pending', 'active', 'rejected'],
-      default: 'pending',
-    },
-    rating: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 5,
-    },
-    numReviews: {
-      type: Number,
-      default: 0,
-    },
+const shopSchema = new mongoose.Schema({
+  user: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User', 
+    required: true, 
+    unique: true // Mỗi user chỉ 1 shop 
   },
-  { timestamps: true }
-);
+  shopName: { type: String, required: true, unique: true, trim: true },
+  description: { type: String, required: true },
+  address: { type: String, required: true },
+  phone: { type: String, required: true },
+  avatar: { type: String, default: 'https://via.placeholder.com/150' },
+  coverImage: { type: String, default: 'https://via.placeholder.com/800x200' },
+  
+  // Trạng thái shop
+  status: { 
+    type: String, 
+    enum: ['pending', 'active', 'rejected'], 
+    default: 'pending' 
+  },
+  
+  // Thông tin duyệt (Admin)
+  approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  approvedAt: { type: Date },
 
+}, { timestamps: true });
 
-const Shop = mongoose.model('Shop', shopSchema);
-module.exports = Shop;
+module.exports = mongoose.model('Shop', shopSchema);
