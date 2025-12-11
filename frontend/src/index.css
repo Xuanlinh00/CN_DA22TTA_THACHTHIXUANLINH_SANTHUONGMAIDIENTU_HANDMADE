@@ -1,29 +1,43 @@
-/* src/index.css – FILE DUY NHẤT, ĐẸP NHƯ ESTY, DỄ SỬA NHƯ FILE LẺ */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* 1. KHAI BÁO TAILWIND V4 (BẮT BUỘC Ở DÒNG ĐẦU) */
+@import "tailwindcss";
 
+/* 2. Import Font chữ */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* 3. Cấu hình theme (Optional - Nếu muốn dùng biến CSS chuẩn của Tailwind v4) */
+@theme {
+  --font-family-sans: 'Poppins', sans-serif;
+  --color-cam-1: #FF853F;
+  --color-cam-2: #FF6B35;
+  --color-nau: #7c3535;
+  --color-be: #f1e6de;
+  --color-vien: #a4a3a1;
+}
+
+/* 4. Các thiết lập cơ bản */
+* { 
+  margin: 0; 
+  padding: 0; 
+  box-sizing: border-box; 
+}
 
 body {
   font-family: 'Poppins', sans-serif;
   background-color: #FFFCFA;
-  color: #2D1E1E;
+  color: #4a3333;
   line-height: 1.6;
 }
 
-/* TONE CAM HOÀN HẢO */
+/* 5. Khai báo biến CSS truyền thống (để dùng cho các class custom bên dưới) */
 :root {
-  --cam-1: #FF853F;   /* Cam chủ đạo – đẹp nhất */
-  --cam-2: #FF6B35;   /* Hover */
-  --nau:   #2D1E1E;
-  --be:    #FFFCFA;
-  --vien:  #FFE8D6;
+  --cam-1: #FF853F;
+  --cam-2: #FF6B35;
+  --nau:   #7c3535;
+  --be:    #f1e6de;
+  --vien:  #a4a3a1;
 }
 
-/* NÚT ĐẸP NHƯ CỬA HÀNG CAO CẤP */
+/* 6. Custom Classes (Bây giờ @apply sẽ hoạt động vì đã có @import "tailwindcss") */
 .btn-cam {
   @apply bg-[var(--cam-1)] hover:bg-[var(--cam-2)] text-white font-bold py-4 px-10 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105;
 }
@@ -32,16 +46,19 @@ body {
   @apply border-2 border-[var(--cam-1)] text-[var(--cam-1)] hover:bg-[var(--cam-1)] hover:text-white font-bold py-4 px-10 rounded-xl transition-all duration-300;
 }
 
-/* CARD SIÊU ĐẸP */
 .card {
   @apply bg-white rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl hover:-translate-y-3 transition-all duration-500 border border-[var(--vien)];
 }
 
-/* NAVBAR & FOOTER */
-.navbar { @apply bg-[#2D1E1E] text-white sticky top-0 z-50 shadow-2xl; }
-.footer { @apply bg-[#2D1E1E] text-white py-20; }
+.navbar { 
+  @apply bg-[#2D1E1E] text-white sticky top-0 z-50 shadow-2xl; 
+}
 
-/* ANIMATION */
+.footer { 
+  @apply bg-[#2D1E1E] text-white py-20; 
+}
+
+/* Animation */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }

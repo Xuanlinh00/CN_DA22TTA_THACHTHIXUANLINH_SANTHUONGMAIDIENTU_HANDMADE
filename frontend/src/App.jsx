@@ -1,5 +1,6 @@
 import { useRoutes } from "react-router-dom";
 import routes from "./routes";
+import './index.css';
 
 function App() {
   const content = useRoutes(routes);

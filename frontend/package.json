@@ -12,6 +12,7 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.1.0",
     "@heroicons/react": "^2.2.0",
+    "@tailwindcss/postcss": "^4.1.17",
     "axios": "^1.13.2",
     "chart.js": "^4.5.1",
     "lucide-react": "^0.555.0",
