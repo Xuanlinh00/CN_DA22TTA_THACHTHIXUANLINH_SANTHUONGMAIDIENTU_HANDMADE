@@ -1,8 +1,7 @@
-// routes/cart.routes.js
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth.middleware');
-const { getCart, addToCart, removeFromCart } = require('../controllers/cart.controller');
+const { getCart, addToCart, updateCartItem, removeFromCart } = require('../controllers/cart.controller');
 
 // Áp dụng middleware bảo vệ cho tất cả route
 router.use(protect);
@@ -11,9 +10,12 @@ router.use(protect);
 router.get('/', getCart);
 
 // Thêm sản phẩm vào giỏ
-router.post('/add', addToCart);
+router.post('/', addToCart);
+
+// Cập nhật số lượng sản phẩm
+router.put('/:productId', updateCartItem);
 
 // Xóa sản phẩm khỏi giỏ
-router.delete('/remove/:productId', removeFromCart);
+router.delete('/:productId', removeFromCart);
 
 module.exports = router;

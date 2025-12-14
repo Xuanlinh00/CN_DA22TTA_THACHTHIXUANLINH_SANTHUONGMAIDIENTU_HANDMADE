@@ -17,7 +17,7 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Email đã được sử dụng' });
     }
 
-    let role = 'customer';
+    let role = 'user';
     if (email === process.env.ADMIN_EMAIL) role = 'admin';
 
     const user = await User.create({

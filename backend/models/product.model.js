@@ -1,27 +1,11 @@
 const mongoose = require('mongoose');
 
-// Schema phụ cho Review
+// Schema phụ cho Review (đơn giản hóa theo yêu cầu)
 const reviewSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  name: { type: String, required: true }, // Lưu tên lúc review để đỡ populate nhiều
+  name: { type: String, required: true },
   rating: { type: Number, required: true, min: 1, max: 5 },
   comment: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
-});
-
-// Schema phụ cho Question & Answer
-const answerSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Người trả lời (thường là Shop)
-  name: String,
-  answer: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const questionSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  name: String,
-  question: { type: String, required: true },
-  answers: [answerSchema], // Một câu hỏi có thể có nhiều câu trả lời
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -32,32 +16,57 @@ const productSchema = new mongoose.Schema({
     ref: 'Shop', 
     required: true 
   },
-  user: { // Người tạo (thường trùng user của Shop)
+  user: { // Người tạo (Shop Owner)
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User', 
     required: true 
   },
 
+  // Thông tin cơ bản sản phẩm handmade
   name: { type: String, required: true, trim: true },
-  image: { type: String, required: true },
+  images: [{ type: String }], // Nhiều ảnh cho sản phẩm handmade
   description: { type: String, required: true },
-  category: { type: String, required: true }, // Có thể đổi thành ObjectId nếu muốn link chặt
+  material: { type: String }, // Chất liệu đặc trung cho handmade
   
-  price: { type: Number, required: true, default: 0 },
-  countInStock: { type: Number, required: true, default: 0 }, // Tồn kho hiện tại
-  sold: { type: Number, default: 0 }, // Số lượng đã bán (để tính Best Seller)
+  // Danh mục handmade
+  category: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Category', 
+    required: true 
+  },
+  
+  // Giá và tồn kho
+  price: { type: Number, required: true, min: 0 },
+  stockQuantity: { type: Number, required: true, default: 0 },
+  sold: { type: Number, default: 0 },
 
-  // Đánh giá
+  // Đánh giá cơ bản
   reviews: [reviewSchema],
   rating: { type: Number, default: 0 },
   numReviews: { type: Number, default: 0 },
 
-  // Hỏi đáp
-  questions: [questionSchema],
-
   // Trạng thái sản phẩm
-  isActive: { type: Boolean, default: true }, // Ẩn/Hiện sản phẩm
-  tags: [String], // Ví dụ: ["handmade", "gốm", "quà tặng"]
+  isActive: { type: Boolean, default: true },
+  tags: [String], // ["handmade", "unique", "gift"]
+
+  // Thông tin bổ sung cho handmade
+  dimensions: { type: String }, // Kích thước
+  weight: { type: Number }, // Trọng lượng (gram)
+  customizable: { type: Boolean, default: false }, // Có thể tùy chỉnh không
+
+  // Hỏi đáp sản phẩm
+  questions: [{
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    name: { type: String, required: true },
+    question: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now },
+    answers: [{
+      user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      name: { type: String },
+      answer: { type: String },
+      createdAt: { type: Date, default: Date.now }
+    }]
+  }]
 
 }, { timestamps: true });
 

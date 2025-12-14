@@ -1,16 +1,111 @@
-# React + Vite
+# Craftify Handmade - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend React cho nền tảng thương mại điện tử handmade.
 
-Currently, two official plugins are available:
+## Công nghệ sử dụng
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 18** - UI Library
+- **Vite** - Build tool
+- **React Router v6** - Routing
+- **TailwindCSS** - Styling
+- **React Query** - Data fetching & caching
+- **Zustand** - State management
+- **React Hook Form** - Form handling
+- **Axios** - HTTP client
+- **React Icons** - Icons
+- **React Hot Toast** - Notifications
 
-## React Compiler
+## Cài đặt
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+# Cài đặt dependencies
+npm install
 
-## Expanding the ESLint configuration
+# Chạy development server
+npm run dev
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+# Build production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+## Cấu trúc thư mục
+
+```
+src/
+├── components/       # Reusable components
+│   └── common/      # Common components (Navbar, Footer, etc.)
+├── pages/           # Page components
+│   ├── auth/        # Authentication pages
+│   ├── admin/       # Admin dashboard pages
+│   └── shop/        # Shop owner pages
+├── services/        # API services
+├── stores/          # Zustand stores
+├── utils/           # Utility functions
+├── App.jsx          # Main app component
+└── main.jsx         # Entry point
+```
+
+## Tính năng
+
+### Khách hàng
+- Đăng ký / Đăng nhập
+- Xem sản phẩm handmade
+- Tìm kiếm & lọc sản phẩm
+- Thêm vào giỏ hàng
+- Đặt hàng
+- Theo dõi đơn hàng
+- Quản lý tài khoản
+
+### Chủ shop
+- Đăng ký cửa hàng
+- Quản lý sản phẩm (CRUD)
+- Quản lý đơn hàng
+- Xem thống kê doanh thu
+- Cập nhật thông tin shop
+
+### Admin
+- Quản lý người dùng
+- Duyệt/từ chối cửa hàng
+- Quản lý sản phẩm
+- Quản lý đơn hàng
+- Quản lý danh mục
+- Xem thống kê tổng quan
+
+## Environment Variables
+
+Tạo file `.env` với nội dung:
+
+```
+VITE_API_URL=http://localhost:8000/api
+VITE_APP_NAME=Craftify Handmade
+```
+
+## Theme
+
+Hệ thống sử dụng theme màu nâu handmade với:
+- Primary: Các tông màu nâu (#43302b - #fdf8f6)
+- Accent: Các tông màu vàng cam (#e89005 - #fef3e2)
+- Font chính: Inter
+- Font tiêu đề: Playfair Display
+
+## API Integration
+
+Tất cả API calls được xử lý thông qua:
+- `src/utils/axios.js` - Axios instance với interceptors
+- `src/services/*.js` - Service functions cho từng module
+
+## State Management
+
+- **Auth State**: Zustand store (`src/stores/authStore.js`)
+- **Cart State**: Zustand store (`src/stores/cartStore.js`)
+- **Server State**: React Query
+
+## Routing
+
+Protected routes được implement với `ProtectedRoute` component:
+- User routes: Yêu cầu đăng nhập
+- Shop owner routes: Yêu cầu role `shop_owner`
+- Admin routes: Yêu cầu role `admin`

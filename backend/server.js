@@ -23,18 +23,21 @@ if (!MONGO_URI) {
 }
 
 // 5. Middleware bảo mật & tiện ích
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(morgan('dev'));
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// 6. Cấu hình CORS cho frontend
+// 6. Cấu hình CORS cho frontend (cho phép cả port 5173 và 5174)
 app.use(cors({
-  origin: CLIENT_URL,           // nhớ là http://localhost:5173 trong .env
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  optionsSuccessStatus: 204     // tránh một số trình duyệt phàn nàn
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
 }));
 
 // XÓA: app.options('*', cors());
@@ -43,6 +46,9 @@ app.use(cors({
 
 // 7. Nếu deploy sau này (behind proxy như Nginx)
 app.set('trust proxy', 1);
+
+// 7.5. Serve static files từ uploads directory
+app.use('/uploads', express.static('uploads'));
 
 // 8. Kết nối MongoDB
 mongoose.connect(MONGO_URI)
@@ -72,6 +78,7 @@ app.use('/api/shops', require('./routes/shop.routes'));
 app.use('/api/categories', require('./routes/category.routes'));
 app.use('/api/admin', require('./routes/admin.routes'));
 app.use('/api/payment', require('./routes/payment.routes'));
+app.use('/api/shipping', require('./routes/shipping.routes'));
 
 // 11. Xử lý lỗi 404
 app.use((req, res, next) => {

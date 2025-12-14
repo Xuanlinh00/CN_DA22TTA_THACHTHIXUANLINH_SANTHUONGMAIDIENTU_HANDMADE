@@ -5,12 +5,19 @@ const {
   createOrder,
   getMyOrders,
   getAllOrders,
-  updateOrderStatus
+  getShopOrders,
+  updateOrderStatus,
+  cancelOrder,
+  getOrderById
 } = require('../controllers/order.controller');
 
-router.post('/', protect, authorize('customer'), createOrder);
-router.get('/myorders', protect, authorize('customer'), getMyOrders);
+// Routes phải được sắp xếp từ cụ thể đến chung
+router.post('/', protect, authorize('user', 'shop_owner'), createOrder);
+router.get('/my-orders', protect, authorize('user', 'shop_owner'), getMyOrders);
+router.get('/shop-orders', protect, authorize('shop_owner'), getShopOrders);
+router.get('/:id', protect, getOrderById); // Thêm route lấy chi tiết đơn hàng
+router.patch('/:id/status', protect, authorize('admin', 'shop_owner'), updateOrderStatus);
+router.patch('/:id/cancel', protect, cancelOrder);
 router.get('/', protect, authorize('admin'), getAllOrders);
-router.patch('/:id/status', protect, authorize('admin', 'vendor'), updateOrderStatus);
 
 module.exports = router;

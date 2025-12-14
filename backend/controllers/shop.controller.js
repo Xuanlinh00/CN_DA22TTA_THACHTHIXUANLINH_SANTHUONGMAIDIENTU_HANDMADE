@@ -11,10 +11,10 @@ const isValidPhone = (phone) => {
 // @route POST /api/shops
 const createShop = async (req, res) => {
   try {
-    const { shopName, description, address, phone, avatar, coverImage } = req.body;
+    const { shopName, description, street, ward, district, city, phone } = req.body;
 
     // A. VALIDATION
-    if (!shopName || !description || !address || !phone) {
+    if (!shopName || !description || !street || !ward || !district || !city || !phone) {
       return res.status(400).json({ success: false, message: 'Vui lòng điền đầy đủ thông tin bắt buộc.' });
     }
     if (shopName.trim().length < 3) {
@@ -40,22 +40,39 @@ const createShop = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Tên gian hàng này đã được sử dụng.' });
     }
 
-    // C. TẠO SHOP
+    // C. Xử lý upload ảnh
+    let avatar = 'https://via.placeholder.com/150';
+    let coverImage = 'https://via.placeholder.com/800x200';
+
+    if (req.files) {
+      if (req.files.avatar && req.files.avatar[0]) {
+        avatar = `/uploads/shops/${req.files.avatar[0].filename}`;
+      }
+      if (req.files.coverImage && req.files.coverImage[0]) {
+        coverImage = `/uploads/shops/${req.files.coverImage[0].filename}`;
+      }
+    }
+
+    // D. TẠO SHOP
     const shop = await Shop.create({
       user: user._id,
       shopName: shopName.trim(),
       description: description.trim(),
-      address: address.trim(),
+      address: {
+        street: street.trim(),
+        ward: ward.trim(),
+        district: district.trim(),
+        city: city.trim()
+      },
       phone: phone.trim(),
-      avatar: avatar || 'https://via.placeholder.com/150',
-      coverImage: coverImage || 'https://via.placeholder.com/800x200',
+      avatar,
+      coverImage,
       status: 'pending' // Mặc định chờ duyệt
     });
 
-    // Cập nhật role user lên vendor (hoặc chờ admin duyệt mới lên - tuỳ logic)
-    // Ở đây ta cập nhật luôn để họ truy cập được giao diện Vendor
-    if (user.role === 'customer') {
-      user.role = 'vendor';
+    // Cập nhật role user lên shop_owner
+    if (user.role === 'user') {
+      user.role = 'shop_owner';
       await user.save();
     }
 
@@ -152,7 +169,7 @@ const getMyShop = async (req, res) => {
 // @route PUT /api/shops/profile
 const updateShop = async (req, res) => {
   try {
-    const { shopName, description, address, phone, avatar, coverImage } = req.body;
+    const { shopName, description, street, ward, district, city, phone } = req.body;
 
     const shop = await Shop.findOne({ user: req.user._id });
     if (!shop) {
@@ -175,9 +192,22 @@ const updateShop = async (req, res) => {
     }
 
     if (description) shop.description = description.trim();
-    if (address) shop.address = address.trim();
-    if (avatar) shop.avatar = avatar;
-    if (coverImage) shop.coverImage = coverImage;
+    
+    // Cập nhật địa chỉ
+    if (street) shop.address.street = street.trim();
+    if (ward) shop.address.ward = ward.trim();
+    if (district) shop.address.district = district.trim();
+    if (city) shop.address.city = city.trim();
+
+    // Xử lý upload ảnh
+    if (req.files) {
+      if (req.files.avatar && req.files.avatar[0]) {
+        shop.avatar = `/uploads/shops/${req.files.avatar[0].filename}`;
+      }
+      if (req.files.coverImage && req.files.coverImage[0]) {
+        shop.coverImage = `/uploads/shops/${req.files.coverImage[0].filename}`;
+      }
+    }
 
     const updatedShop = await shop.save();
     res.json({ success: true, message: 'Cập nhật thành công', data: updatedShop });

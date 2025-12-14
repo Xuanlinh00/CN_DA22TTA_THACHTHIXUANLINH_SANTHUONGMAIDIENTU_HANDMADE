@@ -1,35 +1,91 @@
 const Product = require('../models/product.model');
+const Category = require('../models/category.model');
+const multer = require('multer');
+const path = require('path');
+
+// Cấu hình multer cho upload ảnh
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/products/');
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Chỉ chấp nhận file ảnh!'), false);
+    }
+  }
+});
 
 // --- 1. LẤY TẤT CẢ SẢN PHẨM (Có Lọc & Phân trang) ---
-// @route GET /api/products?keyword=abc&page=1&category=...
 const getProducts = async (req, res) => {
   try {
     // 1. Xử lý tìm kiếm theo tên (keyword)
     const keyword = req.query.keyword
       ? {
-          name: {
-            $regex: req.query.keyword,
-            $options: 'i', // 'i' để không phân biệt hoa thường
-          },
+          $or: [
+            { name: { $regex: req.query.keyword, $options: 'i' } },
+            { description: { $regex: req.query.keyword, $options: 'i' } },
+            { material: { $regex: req.query.keyword, $options: 'i' } }
+          ]
         }
       : {};
 
     // 2. Xử lý lọc theo danh mục
     const categoryQuery = req.query.category ? { category: req.query.category } : {};
 
-    // 3. Phân trang
-    const pageSize = Number(req.query.limit) || 10;
+    // 3. Lọc theo shop (từ query hoặc từ URL params)
+    let shopQuery = {};
+    if (req.query.shop) {
+      shopQuery = { shop: req.query.shop };
+    } else if (req.params.shopId) {
+      shopQuery = { shop: req.params.shopId };
+    }
+
+    // 4. Lọc theo giá
+    let priceQuery = {};
+    if (req.query.minPrice || req.query.maxPrice) {
+      priceQuery.price = {};
+      if (req.query.minPrice) priceQuery.price.$gte = Number(req.query.minPrice);
+      if (req.query.maxPrice) priceQuery.price.$lte = Number(req.query.maxPrice);
+    }
+
+    // 5. Phân trang
+    const pageSize = Number(req.query.limit) || 12;
     const page = Number(req.query.page) || 1;
 
+    // 6. Sắp xếp
+    let sortQuery = { createdAt: -1 }; // Mặc định mới nhất
+    if (req.query.sort === 'price_asc') sortQuery = { price: 1 };
+    if (req.query.sort === 'price_desc') sortQuery = { price: -1 };
+    if (req.query.sort === 'rating') sortQuery = { rating: -1 };
+    if (req.query.sort === 'sold') sortQuery = { sold: -1 };
+
     // Tổng hợp query
-    const query = { ...keyword, ...categoryQuery };
+    const query = { 
+      ...keyword, 
+      ...categoryQuery, 
+      ...shopQuery, 
+      ...priceQuery,
+      isActive: true // Chỉ lấy sản phẩm đang hoạt động
+    };
 
     const count = await Product.countDocuments(query);
     const products = await Product.find(query)
-      .populate('shop', 'shopName') // Hiện tên shop bán
+      .populate('shop', 'shopName avatar')
+      .populate('category', 'name')
       .limit(pageSize)
       .skip(pageSize * (page - 1))
-      .sort({ createdAt: -1 }); // Mới nhất lên đầu
+      .sort(sortQuery);
 
     res.json({
       success: true,
@@ -37,7 +93,9 @@ const getProducts = async (req, res) => {
       pagination: {
         page,
         pages: Math.ceil(count / pageSize),
-        total: count
+        total: count,
+        hasNext: page < Math.ceil(count / pageSize),
+        hasPrev: page > 1
       }
     });
   } catch (error) {
@@ -49,9 +107,9 @@ const getProducts = async (req, res) => {
 const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate('shop', 'shopName avatar')
-      .populate('reviews.user', 'name avatar') // Hiện info người review
-      .populate('questions.user', 'name'); // Hiện info người hỏi
+      .populate('shop', 'shopName avatar status')
+      .populate('category', 'name')
+      .populate('user', 'name');
 
     if (!product) {
       return res.status(404).json({ success: false, message: 'Sản phẩm không tồn tại' });
@@ -59,29 +117,116 @@ const getProductById = async (req, res) => {
 
     res.json({ success: true, data: product });
   } catch (error) {
+    console.error('Error getting product:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// --- 3. TẠO SẢN PHẨM (Admin/Vendor) ---
+// Middleware upload - export để dùng trong routes
+const uploadProductImages = (req, res, next) => {
+  upload.array('images', 8)(req, res, (err) => {
+    if (err) {
+      console.error('❌ Multer error:', err.message);
+      return res.status(400).json({ success: false, message: `Upload error: ${err.message}` });
+    }
+    console.log('✅ Multer middleware completed');
+    console.log('📁 req.files:', req.files ? `${req.files.length} files` : 'undefined');
+    next();
+  });
+};
+
+// --- 3. TẠO SẢN PHẨM (Shop Owner) ---
 const createProduct = async (req, res) => {
   try {
-    const { name, price, description, image, category, countInStock, shop } = req.body;
+    const { 
+      name, 
+      price, 
+      description, 
+      material,
+      category, 
+      stockQuantity,
+      dimensions,
+      weight,
+      customizable,
+      tags
+    } = req.body;
+
+    console.log('\n=== CREATING PRODUCT ===');
+    console.log('📝 Form data:', { name, price, category, stockQuantity });
+    console.log('📁 Files received:', req.files ? req.files.length : 0);
+    if (req.files && req.files.length > 0) {
+      console.log('📸 File details:', req.files.map(f => ({ fieldname: f.fieldname, filename: f.filename, size: f.size })));
+    } else {
+      console.log('⚠️  No files in req.files');
+    }
+
+    // Validation
+    if (!name || !price || !description || !category || !stockQuantity) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng điền đầy đủ thông tin bắt buộc'
+      });
+    }
+
+    // Xử lý upload nhiều ảnh từ file
+    let images = [];
+    if (req.files && req.files.length > 0) {
+      images = req.files.map(file => `/uploads/products/${file.filename}`);
+      console.log('✅ Images processed:', images);
+    } else {
+      console.log('⚠️  req.files is:', req.files);
+      console.log('⚠️  req.file is:', req.file);
+    }
+
+    if (images.length === 0) {
+      console.log('❌ No images provided');
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng upload ít nhất 1 ảnh'
+      });
+    }
+
+    // Kiểm tra user có shop không
+    const Shop = require('../models/shop.model');
+    const userShop = await Shop.findOne({ user: req.user._id, status: 'active' });
+    if (!userShop) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Bạn cần có gian hàng được duyệt để đăng sản phẩm' 
+      });
+    }
 
     const product = new Product({
-      name,
-      price,
-      user: req.user._id, // Người tạo (Vendor/Admin)
-      shop: shop || req.user.shop, // Nếu user là vendor thì lấy shop của họ
-      image,
+      name: name.trim(),
+      price: Number(price),
+      description: description.trim(),
+      material: material ? material.trim() : undefined,
       category,
-      countInStock,
-      description,
+      stockQuantity: Number(stockQuantity),
+      dimensions: dimensions ? dimensions.trim() : undefined,
+      weight: weight ? Number(weight) : undefined,
+      customizable: customizable === 'true' || customizable === true,
+      tags: tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
+      images,
+      user: req.user._id,
+      shop: userShop._id,
+      isActive: true
     });
 
     const createdProduct = await product.save();
-    res.status(201).json({ success: true, data: createdProduct });
+    await createdProduct.populate(['shop', 'category']);
+    
+    console.log('✅ Product created successfully');
+    console.log('📸 Saved images:', createdProduct.images);
+    console.log('=== END CREATING PRODUCT ===\n');
+    
+    res.status(201).json({ 
+      success: true, 
+      message: 'Đã tạo sản phẩm thành công',
+      data: createdProduct 
+    });
   } catch (error) {
+    console.error('Error creating product:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -251,5 +396,6 @@ module.exports = {
   deleteProduct,
   addReview,
   addQuestion,
-  answerQuestion // Export thêm nếu dùng
+  answerQuestion, // Export thêm nếu dùng
+  uploadProductImages // Export middleware upload
 };

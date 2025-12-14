@@ -9,7 +9,12 @@ const shopSchema = new mongoose.Schema({
   },
   shopName: { type: String, required: true, unique: true, trim: true },
   description: { type: String, required: true },
-  address: { type: String, required: true },
+  address: {
+    street: { type: String, required: true },
+    ward: { type: String, required: true },
+    district: { type: String, required: true },
+    city: { type: String, required: true }
+  },
   phone: { type: String, required: true },
   avatar: { type: String, default: 'https://via.placeholder.com/150' },
   coverImage: { type: String, default: 'https://via.placeholder.com/800x200' },

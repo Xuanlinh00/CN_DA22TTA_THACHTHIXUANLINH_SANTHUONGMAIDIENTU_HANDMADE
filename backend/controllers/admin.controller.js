@@ -104,7 +104,7 @@ const deleteUser = async (req, res) => {
 const updateUserRole = async (req, res) => {
   try {
     const { role } = req.body;
-    if (!['customer', 'vendor', 'admin'].includes(role)) {
+    if (!['user', 'shop_owner', 'admin'].includes(role)) {
       return res.status(400).json({ success: false, message: 'Vai trò không hợp lệ' });
     }
 

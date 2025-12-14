@@ -15,7 +15,7 @@ const {
 } = require('../controllers/user.controller');
 
 // 2. Import Middleware
-const { protect, admin } = require('../middleware/auth.middleware');
+const { protect, authorize } = require('../middleware/auth.middleware');
 
 // --- PUBLIC ROUTES (Không cần đăng nhập) ---
 
@@ -55,10 +55,10 @@ router.put('/profile', protect, updateProfile);
 
 // @route   GET /api/users
 // @desc    Lấy danh sách tất cả user
-router.get('/', protect, admin, getAllUsers);
+router.get('/', protect, authorize('admin'), getAllUsers);
 
 // @route   DELETE /api/users/:id
 // @desc    Xoá người dùng theo ID
-router.delete('/:id', protect, admin, deleteUser);
+router.delete('/:id', protect, authorize('admin'), deleteUser);
 
 module.exports = router;
