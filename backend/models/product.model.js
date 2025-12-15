@@ -45,6 +45,10 @@ const productSchema = new mongoose.Schema({
   rating: { type: Number, default: 0 },
   numReviews: { type: Number, default: 0 },
 
+  // Thống kê tìm kiếm và bán hàng
+  searchCount: { type: Number, default: 0 }, // Số lần được tìm kiếm
+  soldThisMonth: { type: Number, default: 0 }, // Số lượng bán trong tháng
+
   // Trạng thái sản phẩm
   isActive: { type: Boolean, default: true },
   tags: [String], // ["handmade", "unique", "gift"]

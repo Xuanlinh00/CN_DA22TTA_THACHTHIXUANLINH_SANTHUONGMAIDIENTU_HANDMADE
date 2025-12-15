@@ -69,7 +69,7 @@ const CreateShop = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-display font-bold text-primary-900 mb-2">
+          <h1 className="text-4xl font-sans font-bold text-primary-900 mb-2">
             Đăng ký cửa hàng
           </h1>
           <p className="text-primary-600">

@@ -8,7 +8,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* About */}
           <div>
-            <h3 className="text-xl font-display font-bold text-white mb-4">Craftify</h3>
+            <h3 className="text-xl font-sans font-bold text-white mb-4">Craftify</h3>
             <p className="text-sm text-primary-200 mb-4">
               Nền tảng mua bán đồ handmade uy tín, kết nối người thợ thủ công với khách hàng yêu thích sản phẩm độc đáo.
             </p>

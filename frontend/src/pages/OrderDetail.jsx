@@ -30,7 +30,7 @@ const OrderDetail = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-display font-bold text-primary-900 mb-2">
+        <h1 className="text-3xl font-sans font-bold text-primary-900 mb-2">
           Chi tiết đơn hàng
         </h1>
         <p className="text-primary-600">

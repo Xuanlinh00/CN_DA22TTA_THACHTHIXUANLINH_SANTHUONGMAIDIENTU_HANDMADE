@@ -27,7 +27,14 @@ const orderItemSchema = new mongoose.Schema({
   image: { type: String, required: true },
   price: { type: Number, required: true },
   quantity: { type: Number, required: true, min: 1 },
-  subtotal: { type: Number, required: true }
+  subtotal: { type: Number, required: true },
+  // Đánh giá sản phẩm
+  reviewed: { type: Boolean, default: false },
+  review: {
+    rating: { type: Number, min: 1, max: 5 },
+    comment: { type: String },
+    createdAt: { type: Date }
+  }
 });
 
 // Schema cho phương thức vận chuyển

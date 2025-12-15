@@ -22,13 +22,14 @@ const Navbar = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/products?search=${searchQuery}`);
+      navigate(`/products?keyword=${encodeURIComponent(searchQuery)}`);
       setSearchQuery('');
+      setIsMenuOpen(false);
     }
   };
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
+    <nav className="bg-gradient-to-r from-primary-800 to-primary-700 shadow-lg sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -40,7 +41,7 @@ const Navbar = () => {
                 className="w-full h-full object-cover"
               />
             </div>
-            <span className="hidden sm:inline text-2xl font-display font-bold text-primary-800">
+            <span className="hidden sm:inline text-2xl font-sans font-bold text-white">
               Craftify
             </span>
           </Link>
@@ -52,26 +53,29 @@ const Navbar = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm kiếm sản phẩm handmade..."
-                className="w-full pl-10 pr-4 py-2 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="Tìm kiếm sản phẩm..."
+                className="w-full pl-10 pr-4 py-2.5 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
               />
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-400" />
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-400" size={18} />
             </div>
           </form>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link to="/products" className="text-primary-700 hover:text-primary-900 font-medium">
+            <Link to="/" className="text-white hover:text-primary-100 font-medium transition-colors">
+              Trang chủ
+            </Link>
+            <Link to="/products" className="text-white hover:text-primary-100 font-medium transition-colors">
               Sản phẩm
             </Link>
-            <Link to="/shops" className="text-primary-700 hover:text-primary-900 font-medium">
+            <Link to="/shops" className="text-white hover:text-primary-100 font-medium transition-colors">
               Cửa hàng
             </Link>
 
             {isAuthenticated ? (
               <>
                 {/* Cart */}
-                <Link to="/cart" className="relative text-primary-700 hover:text-primary-900">
+                <Link to="/cart" className="relative text-white hover:text-primary-100 transition-colors">
                   <FiShoppingCart size={24} />
                   {getItemCount() > 0 && (
                     <span className="absolute -top-2 -right-2 bg-accent-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -84,27 +88,27 @@ const Navbar = () => {
                 {user?.role === 'admin' && (
                   <Link
                     to="/admin"
-                    className="flex items-center space-x-1 text-primary-700 hover:text-primary-900"
+                    className="flex items-center space-x-1 text-white hover:text-primary-100 transition-colors"
                   >
                     <MdDashboard size={20} />
-                    <span>Admin</span>
+                    <span>Quản trị</span>
                   </Link>
                 )}
 
                 {user?.role === 'shop_owner' && (
                   <Link
                     to="/shop-dashboard"
-                    className="flex items-center space-x-1 text-primary-700 hover:text-primary-900"
+                    className="flex items-center space-x-1 text-white hover:text-primary-100 transition-colors"
                   >
                     <MdStorefront size={20} />
-                    <span>Shop</span>
+                    <span>Cửa hàng</span>
                   </Link>
                 )}
 
                 {user?.role === 'user' && (
                   <Link
                     to="/create-shop"
-                    className="flex items-center space-x-1 text-accent-600 hover:text-accent-700 font-medium"
+                    className="flex items-center space-x-1 text-accent-200 hover:text-accent-100 font-medium transition-colors"
                   >
                     <MdStorefront size={20} />
                     <span>Mở shop</span>
@@ -113,7 +117,7 @@ const Navbar = () => {
 
                 {/* User Menu */}
                 <div className="relative group">
-                  <button className="flex items-center space-x-2 text-primary-700 hover:text-primary-900">
+                  <button className="flex items-center space-x-2 text-white hover:text-primary-100 transition-colors">
                     <FiUser size={20} />
                     <span className="font-medium">{user?.name}</span>
                   </button>
@@ -143,10 +147,10 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                <Link to="/login" className="text-primary-700 hover:text-primary-900 font-medium">
+                <Link to="/login" className="text-white hover:text-primary-100 font-medium transition-colors">
                   Đăng nhập
                 </Link>
-                <Link to="/register" className="btn-primary">
+                <Link to="/register" className="bg-accent-500 hover:bg-accent-600 text-white font-medium py-2.5 px-6 rounded-lg transition-colors">
                   Đăng ký
                 </Link>
               </>
@@ -156,7 +160,7 @@ const Navbar = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden text-primary-700"
+            className="md:hidden text-white"
           >
             {isMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
           </button>
@@ -171,24 +175,31 @@ const Navbar = () => {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Tìm kiếm..."
-                  className="w-full pl-10 pr-4 py-2 border border-primary-300 rounded-lg"
+                  placeholder="Tìm kiếm sản phẩm..."
+                  className="w-full pl-10 pr-4 py-2.5 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                 />
-                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-400" />
+                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-400" size={18} />
               </div>
             </form>
 
             <div className="space-y-2">
               <Link
+                to="/"
+                className="block py-2 text-primary-700 hover:text-primary-900 font-medium"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Trang chủ
+              </Link>
+              <Link
                 to="/products"
-                className="block py-2 text-primary-700 hover:text-primary-900"
+                className="block py-2 text-primary-700 hover:text-primary-900 font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Sản phẩm
               </Link>
               <Link
                 to="/shops"
-                className="block py-2 text-primary-700 hover:text-primary-900"
+                className="block py-2 text-primary-700 hover:text-primary-900 font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Cửa hàng

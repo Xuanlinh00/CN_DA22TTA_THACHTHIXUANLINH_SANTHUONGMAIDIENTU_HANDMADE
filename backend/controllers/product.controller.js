@@ -29,16 +29,36 @@ const upload = multer({
 // --- 1. LẤY TẤT CẢ SẢN PHẨM (Có Lọc & Phân trang) ---
 const getProducts = async (req, res) => {
   try {
-    // 1. Xử lý tìm kiếm theo tên (keyword)
-    const keyword = req.query.keyword
-      ? {
-          $or: [
-            { name: { $regex: req.query.keyword, $options: 'i' } },
-            { description: { $regex: req.query.keyword, $options: 'i' } },
-            { material: { $regex: req.query.keyword, $options: 'i' } }
-          ]
+    // 1. Xử lý tìm kiếm theo tên (keyword) - Tìm kiếm linh hoạt
+    let keyword = {};
+    if (req.query.keyword) {
+      const searchTerm = req.query.keyword.trim();
+      // Tách từ khóa thành các từ riêng lẻ
+      const words = searchTerm.split(/\s+/).filter(w => w.length > 0);
+      
+      // Tạo các pattern tìm kiếm
+      const orConditions = [];
+      
+      // 1. Tìm kiếm chính xác toàn bộ từ khóa (ưu tiên cao)
+      orConditions.push(
+        { name: { $regex: searchTerm, $options: 'i' } },
+        { description: { $regex: searchTerm, $options: 'i' } },
+        { material: { $regex: searchTerm, $options: 'i' } }
+      );
+      
+      // 2. Tìm kiếm từng từ riêng lẻ (ưu tiên thấp hơn)
+      words.forEach(word => {
+        if (word.length > 1) {
+          orConditions.push(
+            { name: { $regex: word, $options: 'i' } },
+            { description: { $regex: word, $options: 'i' } },
+            { material: { $regex: word, $options: 'i' } }
+          );
         }
-      : {};
+      });
+      
+      keyword = { $or: orConditions };
+    }
 
     // 2. Xử lý lọc theo danh mục
     const categoryQuery = req.query.category ? { category: req.query.category } : {};
@@ -75,8 +95,8 @@ const getProducts = async (req, res) => {
       ...keyword, 
       ...categoryQuery, 
       ...shopQuery, 
-      ...priceQuery,
-      isActive: true // Chỉ lấy sản phẩm đang hoạt động
+      ...priceQuery
+      // Bỏ isActive vì có thể sản phẩm không có field này
     };
 
     const count = await Product.countDocuments(query);
@@ -86,6 +106,14 @@ const getProducts = async (req, res) => {
       .limit(pageSize)
       .skip(pageSize * (page - 1))
       .sort(sortQuery);
+
+    // Tăng searchCount cho các sản phẩm được tìm kiếm
+    if (req.query.keyword && products.length > 0) {
+      await Product.updateMany(
+        { _id: { $in: products.map(p => p._id) } },
+        { $inc: { searchCount: 1 } }
+      );
+    }
 
     res.json({
       success: true,
@@ -285,7 +313,7 @@ const deleteProduct = async (req, res) => {
 // --- 6. THÊM ĐÁNH GIÁ (REVIEW) ---
 const addReview = async (req, res) => {
   try {
-    const { rating, comment } = req.body;
+    const { rating, comment, orderId } = req.body;
     const product = await Product.findById(req.params.id);
 
     if (!product) {
@@ -299,6 +327,31 @@ const addReview = async (req, res) => {
 
     if (alreadyReviewed) {
       return res.status(400).json({ success: false, message: 'Bạn đã đánh giá sản phẩm này rồi' });
+    }
+
+    // Nếu có orderId, kiểm tra user đã mua sản phẩm này chưa
+    if (orderId) {
+      const Order = require('../models/order.model');
+      const order = await Order.findById(orderId);
+      
+      if (!order || order.user.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ success: false, message: 'Bạn không có quyền đánh giá sản phẩm này' });
+      }
+
+      // Kiểm tra sản phẩm có trong đơn hàng không
+      const itemInOrder = order.items.find(item => item.product.toString() === req.params.id);
+      if (!itemInOrder) {
+        return res.status(400).json({ success: false, message: 'Sản phẩm không có trong đơn hàng này' });
+      }
+
+      // Cập nhật review trong order item
+      itemInOrder.reviewed = true;
+      itemInOrder.review = {
+        rating: Number(rating),
+        comment,
+        createdAt: new Date()
+      };
+      await order.save();
     }
 
     // Tạo object review
@@ -320,7 +373,7 @@ const addReview = async (req, res) => {
       product.reviews.length;
 
     await product.save();
-    res.status(201).json({ success: true, message: 'Đánh giá đã được thêm' });
+    res.status(201).json({ success: true, message: 'Đánh giá đã được thêm', data: product });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

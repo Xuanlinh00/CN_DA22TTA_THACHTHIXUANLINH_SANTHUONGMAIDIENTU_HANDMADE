@@ -85,7 +85,7 @@ const ShopSettings = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-display font-bold text-primary-900 mb-8">
+      <h1 className="text-3xl font-sans font-bold text-primary-900 mb-8">
         Cài đặt cửa hàng
       </h1>
 

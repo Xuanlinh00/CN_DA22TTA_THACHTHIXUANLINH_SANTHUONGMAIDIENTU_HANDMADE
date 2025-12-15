@@ -46,7 +46,7 @@ const Login = () => {
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-display font-bold text-primary-900 mb-2">
+          <h1 className="text-4xl font-sans font-bold text-primary-900 mb-2">
             Đăng nhập
           </h1>
           <p className="text-primary-600">

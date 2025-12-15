@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { FiFilter } from 'react-icons/fi';
@@ -15,8 +15,19 @@ const Products = () => {
     category: searchParams.get('category') || '',
     minPrice: '',
     maxPrice: '',
-    search: searchParams.get('search') || '',
+    keyword: searchParams.get('keyword') || '',
   });
+
+  // Cập nhật filters khi URL thay đổi
+  useEffect(() => {
+    setFilters({
+      category: searchParams.get('category') || '',
+      minPrice: '',
+      maxPrice: '',
+      keyword: searchParams.get('keyword') || '',
+    });
+    setPage(1);
+  }, [searchParams]);
 
   const { data: productsData, isLoading } = useQuery({
     queryKey: ['products', page, filters],
@@ -40,7 +51,7 @@ const Products = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-display font-bold text-primary-900 mb-8">
+      <h1 className="text-3xl font-sans font-bold text-primary-900 mb-8">
         Sản phẩm Handmade
       </h1>
 
@@ -60,8 +71,8 @@ const Products = () => {
               </label>
               <input
                 type="text"
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
+                value={filters.keyword}
+                onChange={(e) => handleFilterChange('keyword', e.target.value)}
                 placeholder="Tên sản phẩm..."
                 className="input-field"
               />
@@ -112,7 +123,7 @@ const Products = () => {
             {/* Reset */}
             <button
               onClick={() => {
-                setFilters({ category: '', minPrice: '', maxPrice: '', search: '' });
+                setFilters({ category: '', minPrice: '', maxPrice: '', keyword: '' });
                 setPage(1);
               }}
               className="w-full btn-outline"

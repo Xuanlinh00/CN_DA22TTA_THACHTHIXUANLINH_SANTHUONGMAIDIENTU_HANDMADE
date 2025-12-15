@@ -33,9 +33,9 @@ const HeroBanner = ({ slides = [] }) => {
   }
 
   return (
-    <div className="relative w-full overflow-hidden bg-gradient-to-r from-primary-800 to-primary-600">
+    <div className="relative w-full overflow-hidden bg-gradient-to-r from-primary-700 to-primary-500">
       {/* Slides container */}
-      <div className="relative w-full min-h-[500px] md:min-h-[600px]">
+      <div className="relative w-full min-h-[400px] md:min-h-[480px]">
         {slides.map((slide, index) => (
           <div
             key={index}
@@ -44,7 +44,7 @@ const HeroBanner = ({ slides = [] }) => {
             }`}
           >
             {/* Background gradient */}
-            <div className="absolute inset-0 bg-gradient-to-r from-primary-800 via-primary-700 to-primary-600" />
+            <div className="absolute inset-0 bg-gradient-to-r from-primary-700 via-primary-600 to-primary-500" />
 
             {/* Content wrapper */}
             <div className="relative h-full flex items-center">
@@ -52,7 +52,7 @@ const HeroBanner = ({ slides = [] }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center h-full">
                   {/* Left side - Text content */}
                   <div className="flex flex-col justify-center py-12 md:py-0 text-white z-10">
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-4 leading-tight">
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-sans font-bold mb-4 leading-tight">
                       {slide.title}
                     </h1>
                     <p className="text-lg md:text-xl text-primary-100 mb-8 leading-relaxed max-w-lg">
@@ -76,13 +76,13 @@ const HeroBanner = ({ slides = [] }) => {
                     </div>
                   </div>
 
-                  {/* Right side - Image with brush stroke effect (overlapping) */}
+                  {/* Right side - Image with brush stroke effect */}
                   <div className="hidden md:flex items-center justify-center relative h-full">
-                    <div className="relative w-96 h-96">
+                    <div className="brush-stroke-image relative w-[450px] h-[320px] lg:w-[550px] lg:h-[380px]">
                       <img
                         src={slide.image}
                         alt={slide.title}
-                        className="w-full h-full object-cover brush-stroke-image"
+                        className="w-full h-full object-cover"
                       />
                     </div>
                   </div>
@@ -133,5 +133,4 @@ const HeroBanner = ({ slides = [] }) => {
     </div>
   );
 };
-
 export default HeroBanner;

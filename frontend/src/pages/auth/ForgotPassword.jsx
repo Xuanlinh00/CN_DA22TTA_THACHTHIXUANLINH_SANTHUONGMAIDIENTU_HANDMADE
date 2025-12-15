@@ -41,7 +41,7 @@ const ForgotPassword = () => {
               <FiMail className="text-green-600" size={32} />
             </div>
             
-            <h1 className="text-2xl font-display font-bold text-primary-900 mb-4">
+            <h1 className="text-2xl font-sans font-bold text-primary-900 mb-4">
               Email Đã Được Gửi
             </h1>
             
@@ -82,7 +82,7 @@ const ForgotPassword = () => {
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-display font-bold text-primary-900 mb-2">
+          <h1 className="text-4xl font-sans font-bold text-primary-900 mb-2">
             Quên Mật Khẩu?
           </h1>
           <p className="text-primary-600">

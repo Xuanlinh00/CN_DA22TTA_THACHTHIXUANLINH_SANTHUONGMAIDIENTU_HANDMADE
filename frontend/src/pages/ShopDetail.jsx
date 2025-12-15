@@ -38,7 +38,7 @@ const ShopDetail = () => {
             />
 
             <div className="flex-1 text-center md:text-left">
-              <h1 className="text-4xl font-display font-bold mb-3">
+              <h1 className="text-4xl font-sans font-bold mb-3">
                 {shop.shopName}
               </h1>
 
@@ -73,7 +73,7 @@ const ShopDetail = () => {
 
       {/* Shop Products */}
       <div className="container mx-auto px-4 py-12">
-        <h2 className="text-2xl font-display font-bold text-primary-900 mb-8">
+        <h2 className="text-2xl font-sans font-bold text-primary-900 mb-8">
           Sản phẩm của cửa hàng
         </h2>
 
