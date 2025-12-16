@@ -5,8 +5,8 @@ const Order = require('../models/order.model');
 
 // Cấu hình VNPAY
 const vnpayConfig = {
-  vnp_TmnCode: process.env.VNPAY_TMN_CODE,
-  vnp_HashSecret: process.env.VNPAY_HASH_SECRET,
+  vnp_TmnCode: process.env.VNPAY_TMN_CODE || 'LWXCNYOK',
+  vnp_HashSecret: process.env.VNPAY_HASH_SECRET || 'QPGTQ7HWPCBXCCI5WKIBPJWXZK40LTVK',
   vnp_Url: process.env.VNPAY_URL || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html',
   vnp_ReturnUrl: process.env.VNPAY_RETURN_URL || 'http://localhost:5173/payment/vnpay-return',
 };
@@ -36,7 +36,8 @@ const createPaymentUrl = async (req, res) => {
     // Tạo các tham số VNPAY
     const date = new Date();
     const createDate = moment(date).format('YYYYMMDDHHmmss');
-    const orderId_vnpay = moment(date).format('DDHHmmss');
+    // Tạo transaction ID unique hơn bằng cách thêm random number
+    const orderId_vnpay = moment(date).format('YYMMDDHHmmss') + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
 
     // Lấy IP address (chuyển IPv6 sang IPv4 nếu cần)
     let ipAddr = req.headers['x-forwarded-for'] || 
@@ -91,17 +92,40 @@ const createPaymentUrl = async (req, res) => {
       sortedParams[key] = vnp_Params[key];
     });
 
-    // Tạo query string
-    const signData = qs.stringify(sortedParams, { encode: false });
+    // Tạo query string theo cách VNPAY yêu cầu
+    // Không encode, không có dấu = ở cuối
+    let signData = '';
+    Object.keys(sortedParams).forEach((key, index) => {
+      if (index === 0) {
+        signData += `${key}=${sortedParams[key]}`;
+      } else {
+        signData += `&${key}=${sortedParams[key]}`;
+      }
+    });
+
+    console.log('📝 Sign Data:', signData);
+    console.log('🔑 Hash Secret:', vnpayConfig.vnp_HashSecret);
     
-    // Tạo secure hash
+    // Tạo secure hash HMAC-SHA512
     const hmac = crypto.createHmac('sha512', vnpayConfig.vnp_HashSecret);
-    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+    const signed = hmac.update(signData).digest('hex');
+    
+    console.log('✅ Secure Hash:', signed);
     
     sortedParams.vnp_SecureHash = signed;
 
-    // Tạo URL thanh toán
-    const paymentUrl = vnpayConfig.vnp_Url + '?' + qs.stringify(sortedParams, { encode: false });
+    // Tạo URL thanh toán - URL encode các giá trị
+    let paymentUrlParams = '';
+    Object.keys(sortedParams).forEach((key, index) => {
+      const value = encodeURIComponent(sortedParams[key]);
+      if (index === 0) {
+        paymentUrlParams += `${key}=${value}`;
+      } else {
+        paymentUrlParams += `&${key}=${value}`;
+      }
+    });
+    const paymentUrl = vnpayConfig.vnp_Url + '?' + paymentUrlParams;
+    console.log('🔗 Payment URL:', paymentUrl);
 
     // Lưu thông tin giao dịch vào đơn hàng
     order.vnpayTransactionId = orderId_vnpay;
