@@ -248,7 +248,24 @@ const ProductDetail = () => {
               <FiShoppingCart />
               <span>Thêm vào giỏ</span>
             </button>
-            <button className="btn-secondary">Mua ngay</button>
+            <button
+              onClick={() => {
+                if (!isAuthenticated) {
+                  toast.error('Vui lòng đăng nhập để mua hàng');
+                  navigate('/login');
+                  return;
+                }
+                if (product) {
+                  const item = { ...product, quantity };
+                  sessionStorage.setItem('tempCart', JSON.stringify([item]));
+                  navigate('/checkout');
+                }
+              }}
+              disabled={product.stock === 0}
+              className="btn-secondary"
+            >
+              Mua ngay
+            </button>
           </div>
 
           {/* Description */}

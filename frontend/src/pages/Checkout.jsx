@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { FiMapPin, FiTruck, FiCreditCard } from 'react-icons/fi';
@@ -11,10 +11,34 @@ import toast from 'react-hot-toast';
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { items, getTotal, clearCart } = useCartStore();
+  const { items: cartItems, getTotal: getCartTotal, clearCart } = useCartStore();
   const { user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [shippingFee] = useState(30000); // Mock shipping fee
+  const [items, setItems] = useState([]);
+  const [isTempCart, setIsTempCart] = useState(false);
+
+  // Kiểm tra xem có "Mua ngay" từ sessionStorage không
+  useEffect(() => {
+    const tempCart = sessionStorage.getItem('tempCart');
+    if (tempCart) {
+      try {
+        setItems(JSON.parse(tempCart));
+        setIsTempCart(true);
+      } catch (error) {
+        console.error('Lỗi parse tempCart:', error);
+        setItems(cartItems);
+        setIsTempCart(false);
+      }
+    } else {
+      setItems(cartItems);
+      setIsTempCart(false);
+    }
+  }, [cartItems]);
+  
+  const getTotal = () => {
+    return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  };
 
   // Helper function to get full image URL
   const getImageUrl = (imagePath) => {
@@ -75,7 +99,11 @@ const Checkout = () => {
       const orderId = response.data._id;
       
       // Xóa giỏ hàng
-      clearCart();
+      if (tempCart) {
+        sessionStorage.removeItem('tempCart');
+      } else {
+        clearCart();
+      }
 
       // Kiểm tra phương thức thanh toán
       if (data.paymentMethod === 'VNPAY') {
@@ -114,6 +142,9 @@ const Checkout = () => {
   };
 
   if (items.length === 0) {
+    if (tempCart) {
+      sessionStorage.removeItem('tempCart');
+    }
     navigate('/cart');
     return null;
   }
