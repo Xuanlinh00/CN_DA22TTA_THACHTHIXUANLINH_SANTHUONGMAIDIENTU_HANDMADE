@@ -8,6 +8,7 @@ import { shopService } from '../../services/shopService';
 import { categoryService } from '../../services/categoryService';
 import { formatCurrency } from '../../utils/formatters';
 import Loading from '../../components/common/Loading';
+import ShopLayout from '../../components/layout/ShopLayout';
 import toast from 'react-hot-toast';
 
 const ShopProducts = () => {
@@ -167,8 +168,9 @@ const ShopProducts = () => {
   const products = productsData?.data || [];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
+    <ShopLayout>
+      <div className="space-y-8">
+        <div className="flex items-center justify-between">
         <h1 className="text-3xl font-sans font-bold text-primary-900">
           Quản lý sản phẩm
         </h1>
@@ -518,7 +520,8 @@ const ShopProducts = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ShopLayout>
   );
 };
 

@@ -262,9 +262,10 @@ const ProductDetail = () => {
                 }
               }}
               disabled={product.stock === 0}
-              className="btn-secondary"
+              className="flex-1 bg-accent-500 hover:bg-accent-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
-              Mua ngay
+              <FiShoppingCart />
+              <span>Mua ngay</span>
             </button>
           </div>
 

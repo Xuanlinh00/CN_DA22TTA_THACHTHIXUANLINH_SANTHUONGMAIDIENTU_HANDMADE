@@ -33,7 +33,7 @@ const HeroBanner = ({ slides = [] }) => {
   }
 
   return (
-    <div className="relative w-full overflow-hidden bg-gradient-to-r from-primary-700 to-primary-500">
+    <div className="relative w-full overflow-hidden bg-gradient-to-r from-orange-200 to-orange-100">
       {/* Slides container */}
       <div className="relative w-full min-h-[400px] md:min-h-[480px]">
         {slides.map((slide, index) => (
@@ -44,18 +44,18 @@ const HeroBanner = ({ slides = [] }) => {
             }`}
           >
             {/* Background gradient */}
-            <div className="absolute inset-0 bg-gradient-to-r from-primary-700 via-primary-600 to-primary-500" />
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-200 via-orange-100 to-orange-50" />
 
             {/* Content wrapper */}
             <div className="relative h-full flex items-center">
               <div className="container mx-auto px-4 md:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center h-full">
                   {/* Left side - Text content */}
-                  <div className="flex flex-col justify-center py-12 md:py-0 text-white z-10">
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-sans font-bold mb-4 leading-tight">
+                  <div className="flex flex-col justify-center py-12 md:py-0 z-10">
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-sans font-extrabold mb-6 leading-relaxed text-gray-900" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.3)'}}>
                       {slide.title}
                     </h1>
-                    <p className="text-lg md:text-xl text-primary-100 mb-8 leading-relaxed max-w-lg">
+                    <p className="text-lg md:text-xl text-gray-800 mb-8 leading-relaxed max-w-lg font-normal" style={{textShadow: '1px 1px 2px rgba(0,0,0,0.2)'}}>
                       {slide.description}
                     </p>
                     <div className="flex flex-wrap gap-4">
@@ -65,8 +65,8 @@ const HeroBanner = ({ slides = [] }) => {
                           to={button.link}
                           className={`inline-flex items-center px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
                             button.variant === 'primary'
-                              ? 'bg-accent-500 text-white hover:bg-accent-600 shadow-lg'
-                              : 'bg-white text-primary-800 hover:bg-primary-50 shadow-md'
+                              ? 'bg-amber-600 text-white hover:bg-amber-700 shadow-lg'
+                              : 'bg-white text-amber-800 hover:bg-amber-50 shadow-md'
                           }`}
                         >
                           {button.label}
@@ -127,7 +127,7 @@ const HeroBanner = ({ slides = [] }) => {
       </div>
 
       {/* Slide counter */}
-      <div className="absolute top-6 right-6 z-20 bg-primary-800/80 text-white px-4 py-2 rounded-full text-sm font-semibold">
+      <div className="absolute top-6 right-6 z-20 bg-amber-600/80 text-white px-4 py-2 rounded-full text-sm font-semibold">
         {currentIndex + 1} / {slides.length}
       </div>
     </div>

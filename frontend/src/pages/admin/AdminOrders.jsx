@@ -53,8 +53,8 @@ const AdminOrders = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`badge badge-${getOrderStatusColor(order.orderStatus)}`}>
-                      {getOrderStatusLabel(order.orderStatus)}
+                    <span className={`badge badge-${getOrderStatusColor(order.status)}`}>
+                      {getOrderStatusLabel(order.status)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">

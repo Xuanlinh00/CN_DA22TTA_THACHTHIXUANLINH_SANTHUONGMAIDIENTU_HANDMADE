@@ -1,23 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const {
-  createPaymentUrl,
-  vnpayReturn,
-  vnpayIPN,
-  getBankList
-} = require('../controllers/payment.controller');
 const { protect } = require('../middleware/auth.middleware');
+const {
+  createVNPayPayment,
+  vnpayReturn,
+  vnpayIPN
+} = require('../controllers/payment.controller');
 
-// Tạo URL thanh toán VNPAY
-router.post('/vnpay/create-payment', protect, createPaymentUrl);
+// Tạo URL thanh toán VNPAY (Yêu cầu đăng nhập)
+router.post('/vnpay/create', protect, createVNPayPayment);
 
-// Callback từ VNPAY (return URL)
+// Callback từ VNPAY (user redirect về - KHÔNG cần protect vì VNPAY gọi)
 router.get('/vnpay/return', vnpayReturn);
 
-// IPN từ VNPAY
+// IPN từ VNPAY (server to server - KHÔNG cần protect)
 router.get('/vnpay/ipn', vnpayIPN);
-
-// Lấy danh sách ngân hàng
-router.get('/vnpay/banks', getBankList);
 
 module.exports = router;

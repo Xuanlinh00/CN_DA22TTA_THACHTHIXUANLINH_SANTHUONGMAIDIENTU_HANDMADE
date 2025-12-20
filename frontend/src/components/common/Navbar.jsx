@@ -4,6 +4,7 @@ import { MdStorefront, MdDashboard } from 'react-icons/md';
 import { useState } from 'react';
 import useAuthStore from '../../stores/authStore';
 import useCartStore from '../../stores/cartStore';
+import NotificationBadge from './NotificationBadge';
 import toast from 'react-hot-toast';
 
 const Navbar = () => {
@@ -29,12 +30,12 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-gradient-to-r from-primary-800 to-primary-700 shadow-lg sticky top-0 z-50">
+    <nav className="bg-gradient-to-r from-amber-800 to-orange-700 shadow-lg sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary-800 flex items-center justify-center bg-white flex-shrink-0">
+            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-amber-800 flex items-center justify-center bg-white flex-shrink-0">
               <img 
                 src="/LOGO.png" 
                 alt="Craftify Logo" 
@@ -62,20 +63,23 @@ const Navbar = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link to="/" className="text-white hover:text-primary-100 font-medium transition-colors">
+            <Link to="/" className="text-white hover:text-amber-100 font-medium transition-colors">
               Trang chủ
             </Link>
-            <Link to="/products" className="text-white hover:text-primary-100 font-medium transition-colors">
+            <Link to="/products" className="text-white hover:text-amber-100 font-medium transition-colors">
               Sản phẩm
             </Link>
-            <Link to="/shops" className="text-white hover:text-primary-100 font-medium transition-colors">
+            <Link to="/shops" className="text-white hover:text-amber-100 font-medium transition-colors">
               Cửa hàng
+            </Link>
+            <Link to="/track-order" className="text-white hover:text-amber-100 font-medium transition-colors">
+              Theo dõi đơn hàng
             </Link>
 
             {isAuthenticated ? (
               <>
                 {/* Cart */}
-                <Link to="/cart" className="relative text-white hover:text-primary-100 transition-colors">
+                <Link to="/cart" className="relative text-white hover:text-amber-100 transition-colors">
                   <FiShoppingCart size={24} />
                   {getItemCount() > 0 && (
                     <span className="absolute -top-2 -right-2 bg-accent-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -88,7 +92,7 @@ const Navbar = () => {
                 {user?.role === 'admin' && (
                   <Link
                     to="/admin"
-                    className="flex items-center space-x-1 text-white hover:text-primary-100 transition-colors"
+                    className="flex items-center space-x-1 text-white hover:text-amber-100 transition-colors"
                   >
                     <MdDashboard size={20} />
                     <span>Quản trị</span>
@@ -98,10 +102,11 @@ const Navbar = () => {
                 {user?.role === 'shop_owner' && (
                   <Link
                     to="/shop-dashboard"
-                    className="flex items-center space-x-1 text-white hover:text-primary-100 transition-colors"
+                    className="flex items-center space-x-1 text-white hover:text-amber-100 transition-colors relative"
                   >
                     <MdStorefront size={20} />
                     <span>Cửa hàng</span>
+                    <NotificationBadge />
                   </Link>
                 )}
 
@@ -117,7 +122,7 @@ const Navbar = () => {
 
                 {/* User Menu */}
                 <div className="relative group">
-                  <button className="flex items-center space-x-2 text-white hover:text-primary-100 transition-colors">
+                  <button className="flex items-center space-x-2 text-white hover:text-amber-100 transition-colors">
                     <FiUser size={20} />
                     <span className="font-medium">{user?.name}</span>
                   </button>
@@ -147,7 +152,7 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                <Link to="/login" className="text-white hover:text-primary-100 font-medium transition-colors">
+                <Link to="/login" className="text-white hover:text-amber-100 font-medium transition-colors">
                   Đăng nhập
                 </Link>
                 <Link to="/register" className="bg-accent-500 hover:bg-accent-600 text-white font-medium py-2.5 px-6 rounded-lg transition-colors">
@@ -168,7 +173,7 @@ const Navbar = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-primary-200">
+          <div className="md:hidden py-4 border-t border-amber-600 bg-amber-800">
             <form onSubmit={handleSearch} className="mb-4">
               <div className="relative">
                 <input
@@ -185,45 +190,52 @@ const Navbar = () => {
             <div className="space-y-2">
               <Link
                 to="/"
-                className="block py-2 text-primary-700 hover:text-primary-900 font-medium"
+                className="block py-2 text-white hover:text-amber-100 font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Trang chủ
               </Link>
               <Link
                 to="/products"
-                className="block py-2 text-primary-700 hover:text-primary-900 font-medium"
+                className="block py-2 text-white hover:text-amber-100 font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Sản phẩm
               </Link>
               <Link
                 to="/shops"
-                className="block py-2 text-primary-700 hover:text-primary-900 font-medium"
+                className="block py-2 text-white hover:text-amber-100 font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Cửa hàng
+              </Link>
+              <Link
+                to="/track-order"
+                className="block py-2 text-white hover:text-amber-100 font-medium"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Theo dõi đơn hàng
               </Link>
 
               {isAuthenticated ? (
                 <>
                   <Link
                     to="/cart"
-                    className="block py-2 text-primary-700 hover:text-primary-900"
+                    className="block py-2 text-white hover:text-amber-100"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Giỏ hàng ({getItemCount()})
                   </Link>
                   <Link
                     to="/profile"
-                    className="block py-2 text-primary-700 hover:text-primary-900"
+                    className="block py-2 text-white hover:text-amber-100"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Tài khoản
                   </Link>
                   <Link
                     to="/orders"
-                    className="block py-2 text-primary-700 hover:text-primary-900"
+                    className="block py-2 text-white hover:text-amber-100"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Đơn hàng
@@ -231,7 +243,7 @@ const Navbar = () => {
                   {user?.role === 'admin' && (
                     <Link
                       to="/admin"
-                      className="block py-2 text-primary-700 hover:text-primary-900"
+                      className="block py-2 text-white hover:text-amber-100"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Admin Dashboard
@@ -240,7 +252,7 @@ const Navbar = () => {
                   {user?.role === 'shop_owner' && (
                     <Link
                       to="/shop-dashboard"
-                      className="block py-2 text-primary-700 hover:text-primary-900"
+                      className="block py-2 text-white hover:text-amber-100"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Shop Dashboard
@@ -260,7 +272,7 @@ const Navbar = () => {
                       handleLogout();
                       setIsMenuOpen(false);
                     }}
-                    className="block w-full text-left py-2 text-red-600"
+                    className="block w-full text-left py-2 text-red-300 hover:text-red-100"
                   >
                     Đăng xuất
                   </button>
@@ -269,14 +281,14 @@ const Navbar = () => {
                 <>
                   <Link
                     to="/login"
-                    className="block py-2 text-primary-700 hover:text-primary-900"
+                    className="block py-2 text-white hover:text-amber-100"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Đăng nhập
                   </Link>
                   <Link
                     to="/register"
-                    className="block py-2 text-primary-700 hover:text-primary-900"
+                    className="block py-2 text-white hover:text-amber-100"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Đăng ký

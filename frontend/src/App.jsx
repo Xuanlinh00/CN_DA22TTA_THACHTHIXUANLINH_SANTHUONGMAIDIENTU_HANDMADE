@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import OrderNotifications from './components/order/OrderNotifications';
 
 // Pages
 import Home from './pages/Home';
@@ -15,7 +16,10 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
+import TrackOrder from './pages/TrackOrder';
 import Profile from './pages/Profile';
+
+import PaymentResult from './pages/PaymentResult';
 import Shops from './pages/Shops';
 import ShopDetail from './pages/ShopDetail';
 
@@ -34,13 +38,13 @@ import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminCategories from './pages/admin/AdminCategories';
 
-// Payment Pages
-import VNPayReturn from './pages/payment/VNPayReturn';
+
 
 function App() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
+      <OrderNotifications />
       <main className="flex-grow">
         <Routes>
           {/* Public Routes */}
@@ -53,6 +57,9 @@ function App() {
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/shops" element={<Shops />} />
           <Route path="/shops/:id" element={<ShopDetail />} />
+          <Route path="/track-order" element={<TrackOrder />} />
+
+          <Route path="/payment/result" element={<PaymentResult />} />
 
           {/* Protected Routes - User */}
           <Route
@@ -188,8 +195,7 @@ function App() {
             }
           />
 
-          {/* Payment Pages */}
-          <Route path="/payment/vnpay-return" element={<VNPayReturn />} />
+
 
           {/* 404 */}
           <Route path="*" element={<div className="container mx-auto px-4 py-20 text-center">

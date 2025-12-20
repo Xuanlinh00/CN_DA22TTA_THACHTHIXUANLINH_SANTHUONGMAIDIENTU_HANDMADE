@@ -26,6 +26,45 @@ const upload = multer({
   }
 });
 
+// --- 0. LẤY SẢN PHẨM NỔI BẬT (Top searched + Top sold) ---
+const getFeaturedProducts = async (req, res) => {
+  try {
+    const limit = Number(req.query.limit) || 8;
+    
+    // Lấy top searched (50% số lượng)
+    const searchedLimit = Math.ceil(limit / 2);
+    const topSearched = await Product.find({ searchCount: { $gt: 0 } })
+      .populate('shop', 'shopName avatar')
+      .populate('category', 'name')
+      .sort({ searchCount: -1 })
+      .limit(searchedLimit);
+
+    // Lấy top sold (50% số lượng còn lại)
+    const soldLimit = limit - topSearched.length;
+    const topSold = await Product.find({ 
+      sold: { $gt: 0 },
+      _id: { $nin: topSearched.map(p => p._id) } // Loại trừ sản phẩm đã có
+    })
+      .populate('shop', 'shopName avatar')
+      .populate('category', 'name')
+      .sort({ sold: -1 })
+      .limit(soldLimit);
+
+    // Merge kết quả
+    const featuredProducts = [...topSearched, ...topSold];
+
+    res.json({
+      success: true,
+      data: featuredProducts,
+      pagination: { total: featuredProducts.length }
+    });
+
+  } catch (error) {
+    console.error('Lỗi lấy sản phẩm nổi bật:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // --- 1. LẤY TẤT CẢ SẢN PHẨM (Có Lọc & Phân trang) ---
 const getProducts = async (req, res) => {
   try {
@@ -89,6 +128,7 @@ const getProducts = async (req, res) => {
     if (req.query.sort === 'price_desc') sortQuery = { price: -1 };
     if (req.query.sort === 'rating') sortQuery = { rating: -1 };
     if (req.query.sort === 'sold') sortQuery = { sold: -1 };
+    if (req.query.sort === 'searched') sortQuery = { searchCount: -1 }; // Sản phẩm được tìm kiếm nhiều nhất
 
     // Tổng hợp query
     const query = { 
@@ -442,6 +482,7 @@ const answerQuestion = async (req, res) => {
 }
 
 module.exports = {
+  getFeaturedProducts,
   getProducts,
   getProductById,
   createProduct,

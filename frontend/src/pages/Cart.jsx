@@ -149,9 +149,8 @@ const Cart = () => {
 
                       <button
                         onClick={() => handleBuyNow(item)}
-                        className="text-accent-600 hover:text-accent-700 font-medium text-sm flex items-center gap-1 mt-2"
+                        className="bg-accent-500 hover:bg-accent-600 text-white font-medium text-sm px-3 py-1.5 rounded flex items-center gap-1 mt-2 transition-colors"
                       >
-                        {/* Đã sửa: FiZap cho nút Mua ngay */}
                         <FiZap size={14} />
                         Mua ngay
                       </button>

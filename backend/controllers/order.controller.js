@@ -11,7 +11,7 @@ const createOrder = async (req, res) => {
       shippingAddress, 
       paymentMethod, 
       shippingMethod,
-      shippingFee = 30000
+      shippingFee // Sẽ được tính từ frontend
     } = req.body;
 
     console.log('📦 Tạo đơn hàng - Items nhận được:', items);
@@ -68,7 +68,26 @@ const createOrder = async (req, res) => {
       });
     }
 
-    const totalAmount = subtotal + shippingFee;
+    // Nếu không có shippingFee từ frontend, tính lại
+    let finalShippingFee = shippingFee;
+    if (!finalShippingFee) {
+      const totalWeight = orderItems.reduce((sum, item) => {
+        const product = productMap[item.product];
+        return sum + ((product.weight || 200) * item.quantity);
+      }, 0);
+
+      const shippingData = {
+        districtId: shippingAddress.districtId,
+        wardCode: shippingAddress.wardCode,
+        weight: totalWeight,
+        orderValue: subtotal
+      };
+
+      const feeData = await ghnService.calculateShippingFee(shippingData);
+      finalShippingFee = feeData.total;
+    }
+
+    const totalPrice = subtotal + finalShippingFee;
 
     // --- BƯỚC 2: TẠO ĐỐI TƯỢNG ORDER ---
     // Tạo orderNumber trước
@@ -92,14 +111,14 @@ const createOrder = async (req, res) => {
       shippingMethod: {
         name: shippingMethod === 'express' ? 'Giao hàng nhanh' : 'Giao hàng tiêu chuẩn',
         provider: 'GHN',
-        fee: shippingFee,
+        fee: finalShippingFee,
         estimatedDays: shippingMethod === 'express' ? 2 : 5
       },
-      paymentMethod: paymentMethod === 'vnpay' ? 'VNPAY' : 'COD',
-      paymentStatus: 'pending',
+      paymentMethod: paymentMethod || 'COD',
+      paymentStatus: paymentMethod === 'VNPAY' ? 'pending' : 'pending',
       subtotal,
-      shippingFee,
-      totalAmount,
+      shippingFee: finalShippingFee,
+      totalPrice,
       status: 'pending'
     });
 
@@ -123,8 +142,8 @@ const createOrder = async (req, res) => {
       }
     } catch (ghnError) {
       console.error('Lỗi GHN:', ghnError.message);
-      // Có thể return lỗi luôn hoặc cho phép tạo đơn nhưng shippingCode rỗng (Admin xử lý sau)
-      // Ở đây tôi chọn cách warning nhưng vẫn cho tạo đơn
+      console.log('⚠️  Đơn hàng được tạo thành công nhưng chưa có mã vận đơn GHN');
+      // Đơn hàng vẫn được tạo, chỉ thiếu mã vận đơn
     }
 
     // --- BƯỚC 4: LƯU ĐƠN & TRỪ TỒN KHO ---
@@ -200,8 +219,8 @@ const getAllOrders = async (req, res) => {
   try {
     let filter = {};
 
-    // Nếu là Vendor, cần tìm Shop ID của user này trước
-    if (req.user.role === 'vendor') {
+    // Nếu là Shop Owner, cần tìm Shop ID của user này trước
+    if (req.user.role === 'shop_owner') {
       const shop = await Shop.findOne({ user: req.user._id });
       if (!shop) {
         return res.status(403).json({ success: false, message: 'Bạn chưa có cửa hàng' });
@@ -238,17 +257,14 @@ const updateOrderStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
     }
 
-    // --- CHECK QUYỀN VENDOR ---
-    if (req.user.role === 'vendor') {
+    // --- CHECK QUYỀN SHOP OWNER ---
+    if (req.user.role === 'shop_owner') {
       const shop = await Shop.findOne({ user: req.user._id });
       if (!shop) {
         return res.status(403).json({ success: false, message: 'Bạn không có quyền (Chưa có shop)' });
       }
 
       // Kiểm tra xem đơn hàng này có món nào thuộc shop này không
-      // Lưu ý: Đồ án nhiều chủ thì 1 đơn có thể có nhiều shop. 
-      // Logic đơn giản: Nếu đơn có hàng của shop -> shop được update status (hoặc chia nhỏ đơn - sub order)
-      // Ở đây ta dùng logic: Shop chỉ được update nếu đơn đó CHỈ chứa hàng của shop hoặc hệ thống cho phép.
       const isOwner = order.items.some(item => item.shop.toString() === shop._id.toString());
       if (!isOwner) {
         return res.status(403).json({ success: false, message: 'Đơn hàng này không thuộc quản lý của bạn' });
@@ -361,6 +377,62 @@ const getOrderById = async (req, res) => {
   }
 };
 
+// 7. Tính phí giao hàng
+const calculateShippingFeeController = async (req, res) => {
+  try {
+    const { items, shippingAddress } = req.body;
+
+    if (!items || items.length === 0) {
+      return res.status(400).json({ success: false, message: 'Không có sản phẩm để tính phí' });
+    }
+
+    if (!shippingAddress || !shippingAddress.districtId || !shippingAddress.wardCode) {
+      return res.status(400).json({ success: false, message: 'Thiếu thông tin địa chỉ giao hàng' });
+    }
+
+    // Lấy thông tin sản phẩm để tính trọng lượng và giá trị
+    const productIds = items.map(item => item.product);
+    const products = await Product.find({ _id: { $in: productIds } });
+
+    let totalWeight = 0;
+    let orderValue = 0;
+
+    for (const item of items) {
+      const product = products.find(p => p._id.toString() === item.product);
+      if (product) {
+        totalWeight += (product.weight || 200) * item.quantity; // gram
+        orderValue += product.price * item.quantity;
+      }
+    }
+
+    // Gọi API GHN tính phí
+    const shippingData = {
+      districtId: shippingAddress.districtId,
+      wardCode: shippingAddress.wardCode,
+      weight: totalWeight,
+      orderValue: orderValue
+    };
+
+    const feeData = await ghnService.calculateShippingFee(shippingData);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        shippingFee: feeData.total,
+        serviceFee: feeData.service_fee,
+        insuranceFee: feeData.insurance_fee,
+        totalWeight: totalWeight,
+        orderValue: orderValue,
+        estimatedDays: 3 // Mặc định 3 ngày
+      }
+    });
+
+  } catch (error) {
+    console.error('Lỗi tính phí giao hàng:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   createOrder,
   getMyOrders,
@@ -368,5 +440,6 @@ module.exports = {
   getAllOrders,
   updateOrderStatus,
   cancelOrder,
-  getOrderById
+  getOrderById,
+  calculateShippingFee: calculateShippingFeeController
 };

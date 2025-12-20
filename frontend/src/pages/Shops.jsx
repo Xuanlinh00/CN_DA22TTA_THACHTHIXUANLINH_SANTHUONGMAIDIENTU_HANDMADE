@@ -20,6 +20,15 @@ const Shops = () => {
     setPage(1);
   };
 
+  // Helper function to get full image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://via.placeholder.com/150';
+    if (imagePath.startsWith('http')) return imagePath;
+    // Remove /api from the URL if present, since images are served at /uploads not /api/uploads
+    const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace('/api', '');
+    return `${baseUrl}${imagePath}`;
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-sans font-bold text-primary-900 mb-8">
@@ -53,9 +62,12 @@ const Shops = () => {
                 {/* Cover Image */}
                 <div className="h-32 bg-gradient-to-r from-primary-600 to-primary-800 relative">
                   <img
-                    src={shop.coverImage}
+                    src={getImageUrl(shop.coverImage)}
                     alt=""
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/800x200';
+                    }}
                   />
                 </div>
 
@@ -64,9 +76,12 @@ const Shops = () => {
                   {/* Avatar */}
                   <div className="absolute -top-12 left-6">
                     <img
-                      src={shop.avatar}
+                      src={getImageUrl(shop.avatar)}
                       alt={shop.shopName}
                       className="w-24 h-24 rounded-full border-4 border-white object-cover"
+                      onError={(e) => {
+                        e.target.src = 'https://via.placeholder.com/150';
+                      }}
                     />
                   </div>
 

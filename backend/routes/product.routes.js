@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/auth.middleware');
 const {
+  getFeaturedProducts,
   createProduct,
   getProducts,
   getProductById,
@@ -14,6 +15,7 @@ const {
 } = require('../controllers/product.controller');
 
 // Routes phải được sắp xếp từ cụ thể đến chung
+router.get('/featured', getFeaturedProducts); // API lấy sản phẩm nổi bật
 router.post('/', protect, authorize('shop_owner'), uploadProductImages, createProduct);
 router.get('/shop/:shopId', getProducts); // Lấy sản phẩm theo shop (phải trước /:id)
 router.get('/:id', getProductById);

@@ -30,9 +30,22 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      // Chỉ clear token, không redirect tự động
+      // Để component xử lý redirect nếu cần
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      
+      // Chỉ redirect nếu không phải là API call từ form submission
+      // Để tránh redirect giữa quá trình submit
+      const isFormSubmission = error.config?.method === 'post' || error.config?.method === 'put';
+      if (!isFormSubmission) {
+        // Delay redirect để component có thời gian xử lý
+        setTimeout(() => {
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
+        }, 500);
+      }
     }
     return Promise.reject(error);
   }

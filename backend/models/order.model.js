@@ -73,20 +73,29 @@ const orderSchema = new mongoose.Schema({
   // Thông tin thanh toán
   paymentMethod: {
     type: String,
-    enum: ['VNPAY', 'COD'],
-    default: 'VNPAY'
+    enum: ['COD', 'VNPAY'],
+    default: 'COD'
   },
   paymentStatus: {
     type: String,
     enum: ['pending', 'paid', 'failed', 'refunded'],
     default: 'pending'
   },
-  vnpayTransactionId: { type: String }, // ID giao dịch VNPAY
+  
+  // Thông tin thanh toán VNPAY
+  vnpayData: {
+    transactionNo: String,      // Mã giao dịch VNPAY
+    bankCode: String,            // Mã ngân hàng
+    cardType: String,            // Loại thẻ
+    payDate: String,             // Thời gian thanh toán
+    responseCode: String,        // Mã phản hồi
+    transactionStatus: String    // Trạng thái giao dịch
+  },
   
   // Tổng tiền
   subtotal: { type: Number, required: true }, // Tổng tiền hàng
   shippingFee: { type: Number, required: true }, // Phí ship
-  totalAmount: { type: Number, required: true }, // Tổng cộng
+  totalPrice: { type: Number, required: true }, // Tổng cộng (đổi từ totalAmount)
   
   // Huê hồng cho Admin
   commissionRate: { type: Number, default: 0.05 }, // 5% huê hồng

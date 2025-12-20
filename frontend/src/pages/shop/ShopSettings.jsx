@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { FiSave } from 'react-icons/fi';
 import { shopService } from '../../services/shopService';
 import Loading from '../../components/common/Loading';
+import ShopLayout from '../../components/layout/ShopLayout';
 import toast from 'react-hot-toast';
 
 const ShopSettings = () => {
@@ -12,6 +13,14 @@ const ShopSettings = () => {
   const [coverImageFile, setCoverImageFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [coverImagePreview, setCoverImagePreview] = useState(null);
+
+  // Helper function to get full image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace('/api', '');
+    return `${baseUrl}${imagePath}`;
+  };
 
   const { data: shopData, isLoading: shopLoading } = useQuery({
     queryKey: ['my-shop'],
@@ -84,119 +93,165 @@ const ShopSettings = () => {
   if (shopLoading) return <Loading fullScreen />;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-sans font-bold text-primary-900 mb-8">
-        Cài đặt cửa hàng
-      </h1>
+    <ShopLayout>
+      <div className="space-y-8">
+        <h1 className="text-3xl font-sans font-bold text-primary-900">
+          Cài đặt cửa hàng
+        </h1>
 
-      <div className="max-w-3xl">
-        <div className="card p-8">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-primary-700 mb-2">
-                Tên cửa hàng *
-              </label>
-              <input
-                {...register('shopName', { required: 'Tên cửa hàng là bắt buộc' })}
-                className="input-field"
-              />
-              {errors.shopName && (
-                <p className="mt-1 text-sm text-red-600">{errors.shopName.message}</p>
-              )}
-            </div>
+        <div className="max-w-3xl">
+          <div className="card p-8">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-primary-700 mb-2">
+                  Tên cửa hàng *
+                </label>
+                <input
+                  {...register('shopName', { required: 'Tên cửa hàng là bắt buộc' })}
+                  className="input-field"
+                />
+                {errors.shopName && (
+                  <p className="mt-1 text-sm text-red-600">{errors.shopName.message}</p>
+                )}
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-primary-700 mb-2">
-                Mô tả *
-              </label>
-              <textarea
-                {...register('description', { required: 'Mô tả là bắt buộc' })}
-                rows={4}
-                className="input-field"
-              />
-              {errors.description && (
-                <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
-              )}
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-primary-700 mb-2">
+                  Mô tả *
+                </label>
+                <textarea
+                  {...register('description', { required: 'Mô tả là bắt buộc' })}
+                  rows={4}
+                  className="input-field"
+                />
+                {errors.description && (
+                  <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
+                )}
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-primary-700 mb-2">
-                Số điện thoại *
-              </label>
-              <input
-                {...register('phone', { required: 'Số điện thoại là bắt buộc' })}
-                className="input-field"
-              />
-              {errors.phone && (
-                <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
-              )}
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-primary-700 mb-2">
+                  Số điện thoại *
+                </label>
+                <input
+                  {...register('phone', { required: 'Số điện thoại là bắt buộc' })}
+                  className="input-field"
+                />
+                {errors.phone && (
+                  <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
+                )}
+              </div>
 
-            <div className="border-t border-primary-200 pt-6">
-              <h3 className="text-lg font-semibold text-primary-900 mb-4">Địa chỉ</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-primary-700 mb-2">
-                    Địa chỉ cụ thể *
-                  </label>
-                  <input
-                    {...register('street', { required: 'Địa chỉ là bắt buộc' })}
-                    className="input-field"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-primary-700 mb-2">
-                    Phường/Xã *
-                  </label>
-                  <input
-                    {...register('ward', { required: 'Phường/Xã là bắt buộc' })}
-                    className="input-field"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-primary-700 mb-2">
-                    Quận/Huyện *
-                  </label>
-                  <input
-                    {...register('district', { required: 'Quận/Huyện là bắt buộc' })}
-                    className="input-field"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-primary-700 mb-2">
-                    Tỉnh/Thành phố *
-                  </label>
-                  <input
-                    {...register('city', { required: 'Tỉnh/Thành phố là bắt buộc' })}
-                    className="input-field"
-                  />
+              <div className="border-t border-primary-200 pt-6">
+                <h3 className="text-lg font-semibold text-primary-900 mb-4">Địa chỉ</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-primary-700 mb-2">
+                      Địa chỉ cụ thể *
+                    </label>
+                    <input
+                      {...register('street', { required: 'Địa chỉ là bắt buộc' })}
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-primary-700 mb-2">
+                      Phường/Xã *
+                    </label>
+                    <input
+                      {...register('ward', { required: 'Phường/Xã là bắt buộc' })}
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-primary-700 mb-2">
+                      Quận/Huyện *
+                    </label>
+                    <input
+                      {...register('district', { required: 'Quận/Huyện là bắt buộc' })}
+                      className="input-field"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-primary-700 mb-2">
+                      Tỉnh/Thành phố *
+                    </label>
+                    <input
+                      {...register('city', { required: 'Tỉnh/Thành phố là bắt buộc' })}
+                      className="input-field"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="border-t border-primary-200 pt-6">
-              <h3 className="text-lg font-semibold text-primary-900 mb-4">Hình ảnh</h3>
-              <div className="space-y-6">
-                {/* Avatar */}
-                <div>
-                  <label className="block text-sm font-medium text-primary-700 mb-2">
-                    Avatar (Ảnh đại diện)
-                  </label>
-                  <div className="flex items-center gap-4">
-                    <div className="w-20 h-20 rounded-full bg-primary-100 overflow-hidden flex items-center justify-center">
-                      {avatarPreview ? (
-                        <img src={avatarPreview} alt="Avatar preview" className="w-full h-full object-cover" />
-                      ) : shopData?.data?.avatar ? (
-                        <img src={shopData.data.avatar} alt="Current avatar" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-2xl">👤</span>
-                      )}
+              <div className="border-t border-primary-200 pt-6">
+                <h3 className="text-lg font-semibold text-primary-900 mb-4">Hình ảnh</h3>
+                <div className="space-y-6">
+                  {/* Avatar */}
+                  <div>
+                    <label className="block text-sm font-medium text-primary-700 mb-2">
+                      Avatar (Ảnh đại diện)
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <div className="w-20 h-20 rounded-full bg-primary-100 overflow-hidden flex items-center justify-center">
+                        {avatarPreview ? (
+                          <img src={avatarPreview} alt="Avatar preview" className="w-full h-full object-cover" />
+                        ) : shopData?.data?.avatar ? (
+                          <img 
+                            src={getImageUrl(shopData.data.avatar)} 
+                            alt="Current avatar" 
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.src = 'https://via.placeholder.com/150';
+                            }}
+                          />
+                        ) : (
+                          <span className="text-2xl">👤</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAvatarChange}
+                          className="block w-full text-sm text-primary-600
+                            file:mr-4 file:py-2 file:px-4
+                            file:rounded file:border-0
+                            file:text-sm file:font-semibold
+                            file:bg-primary-600 file:text-white
+                            hover:file:bg-primary-700"
+                        />
+                        <p className="text-xs text-primary-500 mt-1">Tối đa 5MB, định dạng: JPG, PNG</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
+                  </div>
+
+                  {/* Cover Image */}
+                  <div>
+                    <label className="block text-sm font-medium text-primary-700 mb-2">
+                      Ảnh bìa (Cover Image)
+                    </label>
+                    <div className="space-y-2">
+                      <div className="w-full h-32 rounded bg-primary-100 overflow-hidden flex items-center justify-center">
+                        {coverImagePreview ? (
+                          <img src={coverImagePreview} alt="Cover preview" className="w-full h-full object-cover" />
+                        ) : shopData?.data?.coverImage ? (
+                          <img 
+                            src={getImageUrl(shopData.data.coverImage)} 
+                            alt="Current cover" 
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.src = 'https://via.placeholder.com/800x200';
+                            }}
+                          />
+                        ) : (
+                          <span className="text-4xl">🖼️</span>
+                        )}
+                      </div>
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={handleAvatarChange}
+                        onChange={handleCoverImageChange}
                         className="block w-full text-sm text-primary-600
                           file:mr-4 file:py-2 file:px-4
                           file:rounded file:border-0
@@ -204,55 +259,25 @@ const ShopSettings = () => {
                           file:bg-primary-600 file:text-white
                           hover:file:bg-primary-700"
                       />
-                      <p className="text-xs text-primary-500 mt-1">Tối đa 5MB, định dạng: JPG, PNG</p>
+                      <p className="text-xs text-primary-500">Tối đa 5MB, định dạng: JPG, PNG</p>
                     </div>
-                  </div>
-                </div>
-
-                {/* Cover Image */}
-                <div>
-                  <label className="block text-sm font-medium text-primary-700 mb-2">
-                    Ảnh bìa (Cover Image)
-                  </label>
-                  <div className="space-y-2">
-                    <div className="w-full h-32 rounded bg-primary-100 overflow-hidden flex items-center justify-center">
-                      {coverImagePreview ? (
-                        <img src={coverImagePreview} alt="Cover preview" className="w-full h-full object-cover" />
-                      ) : shopData?.data?.coverImage ? (
-                        <img src={shopData.data.coverImage} alt="Current cover" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-4xl">🖼️</span>
-                      )}
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleCoverImageChange}
-                      className="block w-full text-sm text-primary-600
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-primary-600 file:text-white
-                        hover:file:bg-primary-700"
-                    />
-                    <p className="text-xs text-primary-500">Tối đa 5MB, định dạng: JPG, PNG</p>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <button
-              type="submit"
-              disabled={updateMutation.isPending}
-              className="btn-primary flex items-center space-x-2"
-            >
-              <FiSave />
-              <span>{updateMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}</span>
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={updateMutation.isPending}
+                className="btn-primary flex items-center space-x-2"
+              >
+                <FiSave />
+                <span>{updateMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}</span>
+              </button>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+    </ShopLayout>
   );
 };
 

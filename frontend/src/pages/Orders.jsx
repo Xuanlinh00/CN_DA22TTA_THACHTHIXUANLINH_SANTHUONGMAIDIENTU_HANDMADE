@@ -1,19 +1,40 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { FiPackage, FiShoppingCart } from 'react-icons/fi';
+import { FiPackage, FiShoppingCart, FiTruck, FiCheckCircle, FiClock, FiX } from 'react-icons/fi';
 import { useState } from 'react';
 import { orderService } from '../services/orderService';
-import { formatCurrency, formatDateTime, getOrderStatusLabel, getOrderStatusColor } from '../utils/formatters';
+import { formatCurrency, formatDateTime } from '../utils/formatters';
 import Loading from '../components/common/Loading';
+import OrderStatusBadge from '../components/order/OrderStatusBadge';
+import OrderProgressBar from '../components/order/OrderProgressBar';
 import toast from 'react-hot-toast';
 
 const Orders = () => {
   const [selectedOrders, setSelectedOrders] = useState([]);
+  const [statusFilter, setStatusFilter] = useState('all');
   
   const { data, isLoading } = useQuery({
     queryKey: ['my-orders'],
     queryFn: () => orderService.getMyOrders(),
   });
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'pending': return FiClock;
+      case 'confirmed': return FiCheckCircle;
+      case 'processing': return FiPackage;
+      case 'shipping': return FiTruck;
+      case 'delivered': return FiCheckCircle;
+      case 'cancelled': return FiX;
+      default: return FiPackage;
+    }
+  };
+
+  const getStatusProgress = (status) => {
+    const statusOrder = ['pending', 'confirmed', 'processing', 'shipping', 'delivered'];
+    const currentIndex = statusOrder.indexOf(status);
+    return currentIndex >= 0 ? ((currentIndex + 1) / statusOrder.length) * 100 : 0;
+  };
 
   const handleSelectOrder = (orderId) => {
     setSelectedOrders(prev => 
@@ -24,10 +45,10 @@ const Orders = () => {
   };
 
   const handleSelectAll = () => {
-    if (selectedOrders.length === orders.length) {
+    if (selectedOrders.length === filteredOrders.length) {
       setSelectedOrders([]);
     } else {
-      setSelectedOrders(orders.map(o => o._id));
+      setSelectedOrders(filteredOrders.map(o => o._id));
     }
   };
 
@@ -58,6 +79,20 @@ const Orders = () => {
   if (isLoading) return <Loading />;
 
   const orders = data?.data || [];
+  
+  // Filter orders based on status
+  const filteredOrders = statusFilter === 'all' 
+    ? orders 
+    : orders.filter(order => order.status === statusFilter);
+
+  const statusCounts = {
+    all: orders.length,
+    pending: orders.filter(o => o.status === 'pending').length,
+    processing: orders.filter(o => o.status === 'processing').length,
+    shipping: orders.filter(o => o.status === 'shipping').length,
+    delivered: orders.filter(o => o.status === 'delivered').length,
+    cancelled: orders.filter(o => o.status === 'cancelled').length,
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -65,7 +100,45 @@ const Orders = () => {
         Đơn hàng của tôi
       </h1>
 
-      {orders.length === 0 ? (
+      {/* Status Filter Tabs */}
+      <div className="card p-6 mb-6">
+        <div className="flex flex-wrap gap-2">
+          {[
+            { key: 'all', label: 'Tất cả', icon: FiPackage },
+            { key: 'pending', label: 'Chờ xác nhận', icon: FiClock },
+            { key: 'processing', label: 'Đang chuẩn bị', icon: FiPackage },
+            { key: 'shipping', label: 'Đang giao', icon: FiTruck },
+            { key: 'delivered', label: 'Đã giao', icon: FiCheckCircle },
+            { key: 'cancelled', label: 'Đã hủy', icon: FiX },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = statusFilter === tab.key;
+            const count = statusCounts[tab.key];
+            
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setStatusFilter(tab.key)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                  isActive
+                    ? 'bg-primary-700 text-white'
+                    : 'bg-primary-100 text-primary-700 hover:bg-primary-200'
+                }`}
+              >
+                <Icon size={16} />
+                <span>{tab.label}</span>
+                <span className={`text-xs px-2 py-1 rounded-full ${
+                  isActive ? 'bg-white text-primary-700' : 'bg-primary-200 text-primary-600'
+                }`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {filteredOrders.length === 0 ? (
         <div className="text-center py-20">
           <FiPackage className="mx-auto text-primary-300 mb-4" size={80} />
           <h2 className="text-2xl font-bold text-primary-900 mb-4">
@@ -82,7 +155,7 @@ const Orders = () => {
             <div className="flex items-center gap-4">
               <input
                 type="checkbox"
-                checked={selectedOrders.length === orders.length && orders.length > 0}
+                checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
                 onChange={handleSelectAll}
                 className="w-5 h-5 cursor-pointer"
               />
@@ -113,7 +186,11 @@ const Orders = () => {
 
           {/* Orders List */}
           <div className="space-y-4">
-            {orders.map((order) => (
+            {filteredOrders.map((order) => {
+              const StatusIcon = getStatusIcon(order.status);
+              const progress = getStatusProgress(order.status);
+              
+              return (
               <div
                 key={order._id}
                 className="card p-6 hover:shadow-lg transition-shadow flex items-start gap-4"
@@ -137,10 +214,11 @@ const Orders = () => {
                       <p className="text-sm text-primary-600">Ngày đặt</p>
                       <p className="font-medium text-primary-900">{formatDateTime(order.createdAt)}</p>
                     </div>
-                    <div>
-                      <span className={`badge badge-${getOrderStatusColor(order.orderStatus)}`}>
-                        {getOrderStatusLabel(order.orderStatus)}
-                      </span>
+                    <div className="flex flex-col items-end space-y-2">
+                      <OrderStatusBadge status={order.status} size="sm" />
+                      <div className="w-32">
+                        <OrderProgressBar status={order.status} />
+                      </div>
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-primary-600">Tổng tiền</p>
@@ -169,7 +247,8 @@ const Orders = () => {
                   </div>
                 </Link>
               </div>
-            ))}
+            );
+            })}
           </div>
         </>
       )}

@@ -64,14 +64,14 @@ src={getImageUrl(product.images?.[0])}
 
         {/* Price */}
         <div className="flex items-center justify-between">
-          <span className="text-xl font-bold text-accent-600">
+          <span className="text-xl font-bold text-amber-600">
             {formatCurrency(product.price)}
           </span>
 
           <button
             onClick={handleAddToCart}
             disabled={product.stock === 0}
-            className="p-2 bg-primary-700 text-white rounded-lg hover:bg-primary-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FiShoppingCart size={20} />
           </button>

@@ -10,20 +10,12 @@ import useAuthStore from '../stores/authStore';
 
 const Home = () => {
   const { user } = useAuthStore();
-  // Lấy sản phẩm nổi bật (top searched + top sold)
+  // Lấy sản phẩm được tìm kiếm và mua nhiều nhất
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: ['featured-products'],
     queryFn: async () => {
-      // Lấy top searched
-      const topSearched = await fetch('/api/products?sort=searched&limit=4').then(r => r.json());
-      // Lấy top sold
-      const topSold = await fetch('/api/products?sort=sold&limit=4').then(r => r.json());
-      
-      // Merge và deduplicate
-      const allProducts = [...(topSearched.data || []), ...(topSold.data || [])];
-      const uniqueProducts = Array.from(new Map(allProducts.map(p => [p._id, p])).values()).slice(0, 8);
-      
-      return { data: uniqueProducts, pagination: { total: uniqueProducts.length } };
+      const response = await fetch('/api/products/featured?limit=8');
+      return response.json();
     },
   });
 
@@ -36,7 +28,7 @@ const Home = () => {
   const heroSlides = [
     {
       title: 'Khám phá thế giới Handmade độc đáo',
-      description: 'Nơi kết nối những người thợ thủ công tài năng với khách hàng yêu thích sản phẩm độc đáo, chất lượng',
+      description: 'Chất lượng được đảm bảo - Nơi kết nối những người thợ thủ công tài năng với khách hàng yêu thích sản phẩm độc đáo',
       image: '/slider1.jpg',
       buttons: [
         { label: 'Khám phá ngay', link: '/products', variant: 'primary' },
@@ -133,7 +125,7 @@ const Home = () => {
             <div className="lg:col-span-9">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-3xl font-sans font-bold text-primary-900">
-                  Sản phẩm nổi bật
+                  Sản phẩm được tìm kiếm và mua nhiều
                 </h2>
                 <Link to="/products" className="text-primary-700 hover:text-primary-900 font-medium flex items-center">
                   Xem tất cả

@@ -17,6 +17,9 @@ const generateToken = (res, userId) => {
   if (process.env.NODE_ENV !== 'production') {
     console.log('JWT generated for user:', userId);
   }
+
+  // Trả về token để frontend có thể sử dụng
+  return token;
 };
 
 module.exports = generateToken;

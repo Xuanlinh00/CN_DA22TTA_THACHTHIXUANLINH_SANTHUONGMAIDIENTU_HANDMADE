@@ -23,8 +23,11 @@ const Login = () => {
       const response = await authService.login(data);
       
       // Lưu token vào localStorage
-      const token = response.token || localStorage.getItem('token');
-      setAuth(response, token);
+      const token = response.token;
+      if (!token) {
+        throw new Error('Không nhận được token từ server');
+      }
+      setAuth(response.user || response, token);
       
       toast.success('Đăng nhập thành công!');
       

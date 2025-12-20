@@ -1,17 +1,41 @@
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { FiMapPin, FiTruck, FiCreditCard, FiPackage } from 'react-icons/fi';
 import { orderService } from '../services/orderService';
+import { paymentService } from '../services/paymentService';
 import { formatCurrency, formatDateTime, getOrderStatusLabel, getOrderStatusColor } from '../utils/formatters';
 import Loading from '../components/common/Loading';
+import OrderTracking from '../components/order/OrderTracking';
+import toast from 'react-hot-toast';
 
 const OrderDetail = () => {
   const { id } = useParams();
+  const [isPaymentLoading, setIsPaymentLoading] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['order', id],
     queryFn: () => orderService.getById(id),
   });
+
+  const handleVNPayPayment = async () => {
+    try {
+      setIsPaymentLoading(true);
+      const response = await paymentService.createVNPayPayment(id);
+      
+      if (response.success && response.data.paymentUrl) {
+        toast.success('Đang chuyển đến trang thanh toán VNPAY...');
+        window.location.href = response.data.paymentUrl;
+      } else {
+        toast.error('Không thể tạo thanh toán VNPAY');
+      }
+    } catch (error) {
+      console.error('❌ Lỗi tạo thanh toán VNPAY:', error);
+      toast.error('Lỗi tạo thanh toán. Vui lòng thử lại sau.');
+    } finally {
+      setIsPaymentLoading(false);
+    }
+  };
 
   // Helper function to get full image URL
   const getImageUrl = (imagePath) => {
@@ -41,21 +65,8 @@ const OrderDetail = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Status */}
-          <div className="card p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-primary-600 mb-1">Trạng thái đơn hàng</p>
-                <span className={`badge badge-${getOrderStatusColor(order.orderStatus)} text-base`}>
-                  {getOrderStatusLabel(order.orderStatus)}
-                </span>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-primary-600 mb-1">Ngày đặt</p>
-                <p className="font-medium text-primary-900">{formatDateTime(order.createdAt)}</p>
-              </div>
-            </div>
-          </div>
+          {/* Order Tracking */}
+          <OrderTracking order={order} />
 
           {/* Products */}
           <div className="card p-6">
@@ -112,11 +123,20 @@ const OrderDetail = () => {
                 Thanh toán
               </h3>
               <p className="text-primary-700">
-                {order.paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng' : 'Chuyển khoản'}
+                {order.paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng' : 
+                 order.paymentMethod === 'VNPAY' ? 'Thanh toán qua VNPAY' : 'Chuyển khoản'}
               </p>
-              <p className={`mt-2 badge ${order.isPaid ? 'badge-success' : 'badge-warning'}`}>
-                {order.isPaid ? 'Đã thanh toán' : 'Chưa thanh toán'}
+              <p className={`mt-2 badge ${order.paymentStatus === 'paid' ? 'badge-success' : 'badge-warning'}`}>
+                {order.paymentStatus === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
               </p>
+              
+              {/* Hiển thị thông tin VNPAY nếu có */}
+              {order.vnpayData && order.vnpayData.transactionNo && (
+                <div className="mt-3 text-sm text-primary-600">
+                  <p>Mã GD: {order.vnpayData.transactionNo}</p>
+                  <p>Ngân hàng: {order.vnpayData.bankCode}</p>
+                </div>
+              )}
             </div>
 
             <div className="card p-6">
@@ -154,8 +174,19 @@ const OrderDetail = () => {
               </div>
             </div>
 
-            {order.orderStatus === 'pending_payment' && (
-              <button className="w-full btn-primary mt-6">
+            {/* Nút thanh toán VNPAY nếu chưa thanh toán */}
+            {order.paymentMethod === 'VNPAY' && order.paymentStatus === 'pending' && (
+              <button 
+                onClick={handleVNPayPayment}
+                disabled={isPaymentLoading}
+                className="w-full btn-primary mt-6 disabled:opacity-50"
+              >
+                {isPaymentLoading ? 'Đang xử lý...' : 'Thanh toán ngay'}
+              </button>
+            )}
+
+            {order.status === 'pending' && (
+              <button className="w-full btn-outline mt-3">
                 Hủy đơn hàng
               </button>
             )}

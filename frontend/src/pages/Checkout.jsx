@@ -23,7 +23,8 @@ const Checkout = () => {
     const tempCart = sessionStorage.getItem('tempCart');
     if (tempCart) {
       try {
-        setItems(JSON.parse(tempCart));
+        const parsedCart = JSON.parse(tempCart);
+        setItems(parsedCart);
         setIsTempCart(true);
       } catch (error) {
         console.error('Lỗi parse tempCart:', error);
@@ -35,6 +36,13 @@ const Checkout = () => {
       setIsTempCart(false);
     }
   }, [cartItems]);
+
+  // Kiểm tra giỏ hàng trống và redirect
+  useEffect(() => {
+    if (items.length === 0 && !sessionStorage.getItem('tempCart')) {
+      navigate('/cart');
+    }
+  }, [items, navigate]);
   
   const getTotal = () => {
     return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -52,6 +60,7 @@ const Checkout = () => {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -67,14 +76,27 @@ const Checkout = () => {
     },
   });
 
+  // Watch form fields để kiểm tra địa chỉ đã điền đủ chưa
+  const formData = watch();
+  const isAddressComplete = formData.fullName && formData.phone && formData.street && formData.ward && formData.district && formData.city;
+  const calculatedShippingFee = isAddressComplete ? 30000 : 0;
+
   const onSubmit = async (data) => {
-    if (items.length === 0) {
+    if (!items || items.length === 0) {
       toast.error('Giỏ hàng trống');
       return;
     }
 
+    // Debug: Kiểm tra token
+    const token = localStorage.getItem('token');
+    console.log('🔐 Token:', token ? '✅ Có' : '❌ Không có');
+    console.log('👤 User:', user);
+
     setIsLoading(true);
     try {
+      const tempCart = sessionStorage.getItem('tempCart');
+      const isTemp = !!tempCart;
+
       const orderData = {
         items: items.map(item => ({
           product: item._id,
@@ -91,61 +113,48 @@ const Checkout = () => {
         },
         paymentMethod: data.paymentMethod,
         shippingMethod: data.shippingMethod,
-        shippingFee,
-        totalPrice: getTotal() + shippingFee,
+        shippingFee: calculatedShippingFee,
+        totalPrice: getTotal() + calculatedShippingFee,
       };
 
       const response = await orderService.create(orderData);
       const orderId = response.data._id;
       
       // Xóa giỏ hàng
-      if (tempCart) {
+      if (isTemp) {
         sessionStorage.removeItem('tempCart');
       } else {
         clearCart();
       }
 
-      // Kiểm tra phương thức thanh toán
+      // Xử lý thanh toán
       if (data.paymentMethod === 'VNPAY') {
-        // Nếu chọn VNPAY, tạo URL thanh toán và redirect
-        try {
-          const paymentData = {
-            orderId: orderId,
-            amount: getTotal() + shippingFee,
-            orderInfo: `Thanh toan don hang ${response.data.orderNumber}`,
-          };
-
-          const paymentResponse = await paymentService.createPaymentUrl(paymentData);
-          
-          if (paymentResponse.success && paymentResponse.data.paymentUrl) {
-            // Redirect đến trang VNPAY
-            window.location.href = paymentResponse.data.paymentUrl;
-          } else {
-            toast.error('Không thể tạo URL thanh toán');
-            navigate(`/orders/${orderId}`);
-          }
-        } catch (paymentError) {
-          console.error('Lỗi tạo thanh toán VNPAY:', paymentError);
-          toast.error('Lỗi tạo thanh toán. Vui lòng thanh toán sau.');
-          navigate(`/orders/${orderId}`);
-        }
+        // Tạo URL thanh toán VNPAY
+        const paymentResponse = await paymentService.createVNPayPayment(orderId);
+        window.location.href = paymentResponse.data.paymentUrl;
       } else {
-        // Nếu COD, chuyển thẳng đến trang đơn hàng
+        // COD - Chuyển thẳng đến trang đơn hàng
         toast.success('Đặt hàng thành công!');
         navigate(`/orders/${orderId}`);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Đặt hàng thất bại');
+      console.error('❌ Lỗi đặt hàng:', error);
+      console.error('Response status:', error.response?.status);
+      console.error('Response data:', error.response?.data);
+      
+      if (error.response?.status === 401) {
+        toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+        // Không redirect tự động, để user có cơ hội thấy lỗi
+      } else {
+        toast.error(error.response?.data?.message || 'Đặt hàng thất bại');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Nếu giỏ hàng trống, không render gì
   if (items.length === 0) {
-    if (tempCart) {
-      sessionStorage.removeItem('tempCart');
-    }
-    navigate('/cart');
     return null;
   }
 
@@ -262,18 +271,26 @@ const Checkout = () => {
               </h2>
 
               <div className="space-y-3">
+                {!isAddressComplete && (
+                  <p className="text-sm text-primary-600 mb-3">
+                    ⚠️ Vui lòng điền đầy đủ địa chỉ để tính phí vận chuyển
+                  </p>
+                )}
                 <label className="flex items-center p-4 border border-primary-300 rounded-lg cursor-pointer hover:bg-primary-50">
                   <input
                     type="radio"
                     {...register('shippingMethod')}
                     value="standard"
                     className="mr-3"
+                    disabled={!isAddressComplete}
                   />
                   <div className="flex-1">
                     <p className="font-medium text-primary-900">Giao hàng tiêu chuẩn</p>
                     <p className="text-sm text-primary-600">3-5 ngày</p>
                   </div>
-                  <span className="font-semibold text-primary-900">{formatCurrency(shippingFee)}</span>
+                  <span className="font-semibold text-primary-900">
+                    {isAddressComplete ? formatCurrency(calculatedShippingFee) : 'Chưa tính'}
+                  </span>
                 </label>
               </div>
             </div>
@@ -292,6 +309,7 @@ const Checkout = () => {
                     {...register('paymentMethod')}
                     value="COD"
                     className="mr-3"
+                    defaultChecked
                   />
                   <div>
                     <p className="font-medium text-primary-900">Thanh toán khi nhận hàng (COD)</p>
@@ -306,9 +324,16 @@ const Checkout = () => {
                     value="VNPAY"
                     className="mr-3"
                   />
-                  <div>
-                    <p className="font-medium text-primary-900">Thanh toán qua VNPAY</p>
-                    <p className="text-sm text-primary-600">Thanh toán online qua cổng VNPAY (ATM, Visa, MasterCard)</p>
+                  <div className="flex items-center">
+                    <div>
+                      <p className="font-medium text-primary-900">Thanh toán qua VNPAY</p>
+                      <p className="text-sm text-primary-600">Thanh toán bằng thẻ ATM, Visa, MasterCard</p>
+                    </div>
+                    <img 
+                      src="https://vnpay.vn/s1/statics.vnpay.vn/2023/9/06ncktiwd6dc1694418196384.png" 
+                      alt="VNPAY" 
+                      className="h-8 ml-auto"
+                    />
                   </div>
                 </label>
               </div>
@@ -350,20 +375,22 @@ const Checkout = () => {
                 </div>
                 <div className="flex justify-between text-primary-700">
                   <span>Phí vận chuyển</span>
-                  <span>{formatCurrency(shippingFee)}</span>
+                  <span>{isAddressComplete ? formatCurrency(calculatedShippingFee) : 'Chưa tính'}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold text-primary-900 border-t border-primary-200 pt-3">
                   <span>Tổng cộng</span>
-                  <span className="text-accent-600">{formatCurrency(getTotal() + shippingFee)}</span>
+                  <span className="text-accent-600">
+                    {isAddressComplete ? formatCurrency(getTotal() + calculatedShippingFee) : formatCurrency(getTotal())}
+                  </span>
                 </div>
               </div>
 
               <button
                 type="submit"
-                disabled={isLoading}
-                className="w-full btn-primary mt-6"
+                disabled={isLoading || !isAddressComplete}
+                className="w-full btn-primary mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? 'Đang xử lý...' : 'Đặt hàng'}
+                {!isAddressComplete ? 'Điền đầy đủ địa chỉ để tiếp tục' : isLoading ? 'Đang xử lý...' : 'Đặt hàng'}
               </button>
             </div>
           </div>
