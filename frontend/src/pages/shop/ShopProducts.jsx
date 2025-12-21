@@ -245,8 +245,12 @@ const ShopProducts = () => {
                       <div className="text-sm text-primary-900">{product.stockQuantity}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`badge ${product.stockQuantity > 0 ? 'badge-success' : 'badge-danger'}`}>
-                        {product.stockQuantity > 0 ? 'Còn hàng' : 'Hết hàng'}
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                        product.stockQuantity > 0 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {product.stockQuantity > 0 ? '✓ Còn hàng' : '✗ Hết hàng'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -284,8 +288,8 @@ const ShopProducts = () => {
 
       {/* Add/Edit Product Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white rounded-lg max-w-2xl w-full p-6 my-8">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto pt-20">
+          <div className="bg-white rounded-lg max-w-2xl w-full p-6 my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-primary-900">
                 {editingProduct ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}

@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Backend specific
+backend/uploads/
+backend/.env
+backend/node_modules/
+
+# Frontend specific
+frontend/dist/
+frontend/node_modules/
+frontend/.env
+
+# IDE workspace settings
+.vscode/settings.json
+.vscode/launch.json
+
+# Misc
+~$*.docx
+*.docx~
