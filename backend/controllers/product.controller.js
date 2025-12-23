@@ -378,6 +378,11 @@ const addReview = async (req, res) => {
         return res.status(403).json({ success: false, message: 'Bạn không có quyền đánh giá sản phẩm này' });
       }
 
+      // Kiểm tra đơn hàng đã giao thành công chưa
+      if (order.status !== 'delivered') {
+        return res.status(400).json({ success: false, message: 'Chỉ có thể đánh giá khi đơn hàng đã giao thành công' });
+      }
+
       // Kiểm tra sản phẩm có trong đơn hàng không
       const itemInOrder = order.items.find(item => item.product.toString() === req.params.id);
       if (!itemInOrder) {

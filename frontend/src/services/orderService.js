@@ -26,6 +26,11 @@ export const orderService = {
     return response.data;
   },
 
+  confirmDelivery: async (id) => {
+    const response = await axios.patch(`/orders/${id}/confirm-delivery`);
+    return response.data;
+  },
+
   getShopOrders: async (params) => {
     const response = await axios.get('/orders/shop-orders', { params });
     return response.data;

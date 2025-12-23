@@ -1,7 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { FiTrash2, FiMinus, FiPlus, FiShoppingBag, FiZap, FiPackage, FiCheckCircle, FiClock, FiTruck, FiX } from 'react-icons/fi';
-import { useState } from 'react';
+import { FiTrash2, FiMinus, FiPlus, FiShoppingBag, FiZap, FiPackage } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import useAuthStore from '../stores/authStore';
 import useCartStore from '../stores/cartStore';
 import { formatCurrency, formatDateTime } from '../utils/formatters';
 import { orderService } from '../services/orderService';
@@ -13,8 +14,16 @@ import toast from 'react-hot-toast';
 const Cart = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const { items, removeFromCart, updateQuantity, getTotal, clearCart } = useCartStore();
-  const [activeTab, setActiveTab] = useState('cart'); // 'cart' or 'orders'
+  const [activeTab, setActiveTab] = useState('cart');
+
+  // Admin không có giỏ hàng, redirect sang admin dashboard
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      navigate('/admin');
+    }
+  }, [user?.role, navigate]);
 
   const { data: ordersData, isLoading: ordersLoading } = useQuery({
     queryKey: ['my-orders'],
@@ -32,28 +41,22 @@ const Cart = () => {
     },
   });
 
-  // Nhóm sản phẩm theo shop
   const itemsByShop = items.reduce((acc, item) => {
     const shopId = item.shop?._id || 'unknown';
     if (!acc[shopId]) {
-      acc[shopId] = {
-        shop: item.shop,
-        items: []
-      };
+      acc[shopId] = { shop: item.shop, items: [] };
     }
     acc[shopId].items.push(item);
     return acc;
   }, {});
 
   const handleBuyNow = (item) => {
-    const tempCart = [item];
-    sessionStorage.setItem('tempCart', JSON.stringify(tempCart));
+    sessionStorage.setItem('tempCart', JSON.stringify([item]));
     navigate('/checkout');
   };
 
   const handleBuyShop = (shopId) => {
-    const shopItems = itemsByShop[shopId].items;
-    sessionStorage.setItem('tempCart', JSON.stringify(shopItems));
+    sessionStorage.setItem('tempCart', JSON.stringify(itemsByShop[shopId].items));
     navigate('/checkout');
   };
 
@@ -106,97 +109,52 @@ const Cart = () => {
           {items.length === 0 ? (
             <div className="text-center py-20">
               <FiShoppingBag className="mx-auto text-primary-300 mb-4" size={80} />
-              <h2 className="text-2xl font-bold text-primary-900 mb-4">
-                Giỏ hàng trống
-              </h2>
-              <p className="text-primary-600 mb-8">
-                Hãy thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm
-              </p>
-              <Link to="/products" className="btn-primary">
-                Khám phá sản phẩm
-              </Link>
+              <h2 className="text-2xl font-bold text-primary-900 mb-4">Giỏ hàng trống</h2>
+              <p className="text-primary-600 mb-8">Hãy thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm</p>
+              <Link to="/products" className="btn-primary">Khám phá sản phẩm</Link>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Cart Items - Grouped by Shop */}
               <div className="lg:col-span-2 space-y-6">
                 {Object.entries(itemsByShop).map(([shopId, { shop, items: shopItems }]) => (
                   <div key={shopId} className="card overflow-hidden">
-                    {/* Shop Header */}
                     <div className="bg-primary-50 p-4 border-b border-primary-200 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <img
-                          src={shop?.avatar || '/default-shop-avatar.jpg'}
-                          alt={shop?.shopName}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                        <Link
-                          to={`/shops/${shop?._id}`}
-                          className="font-semibold text-primary-900 hover:text-primary-700"
-                        >
+                        <img src={shop?.avatar || '/default-shop-avatar.jpg'} alt={shop?.shopName} className="w-10 h-10 rounded-full object-cover" />
+                        <Link to={`/shops/${shop?._id}`} className="font-semibold text-primary-900 hover:text-primary-700">
                           {shop?.shopName || 'Cửa hàng'}
                         </Link>
                       </div>
-                      <button
-                        onClick={() => handleBuyShop(shopId)}
-                        className="btn-secondary flex items-center gap-2 text-sm"
-                      >
+                      <button onClick={() => handleBuyShop(shopId)} className="btn-secondary flex items-center gap-2 text-sm">
                         <FiZap size={16} />
                         Mua tất cả
                       </button>
                     </div>
 
-                    {/* Shop Items */}
                     <div className="space-y-3 p-4">
                       {shopItems.map((item) => (
                         <div key={item._id} className="flex gap-4 pb-3 border-b border-primary-100 last:border-0 last:pb-0">
-                          <img
-                            src={getImageUrl(item.images?.[0])}
-                            alt={item.name}
-                            className="w-20 h-20 object-cover rounded-lg"
-                          />
-
+                          <img src={getImageUrl(item.images?.[0])} alt={item.name} className="w-20 h-20 object-cover rounded-lg" />
                           <div className="flex-1">
-                            <Link
-                              to={`/products/${item._id}`}
-                              className="font-semibold text-primary-900 hover:text-primary-700 line-clamp-2"
-                            >
+                            <Link to={`/products/${item._id}`} className="font-semibold text-primary-900 hover:text-primary-700 line-clamp-2">
                               {item.name}
                             </Link>
-                            <p className="text-lg font-bold text-accent-600 mt-1">
-                              {formatCurrency(item.price)}
-                            </p>
+                            <p className="text-lg font-bold text-accent-600 mt-1">{formatCurrency(item.price)}</p>
                           </div>
-
                           <div className="flex flex-col items-end justify-between">
-                            <button
-                              onClick={() => removeFromCart(item._id)}
-                              className="text-red-600 hover:text-red-700"
-                            >
+                            <button onClick={() => removeFromCart(item._id)} className="text-red-600 hover:text-red-700">
                               <FiTrash2 size={18} />
                             </button>
-
                             <div className="flex items-center space-x-1 border border-primary-300 rounded-lg">
-                              <button
-                                onClick={() => updateQuantity(item._id, Math.max(1, item.quantity - 1))}
-                                className="p-1 hover:bg-primary-100"
-                              >
+                              <button onClick={() => updateQuantity(item._id, Math.max(1, item.quantity - 1))} className="p-1 hover:bg-primary-100">
                                 <FiMinus size={14} />
                               </button>
                               <span className="px-3 font-medium text-sm">{item.quantity}</span>
-                              <button
-                                onClick={() => updateQuantity(item._id, item.quantity + 1)}
-                                className="p-1 hover:bg-primary-100"
-                                disabled={item.quantity >= item.stock}
-                              >
+                              <button onClick={() => updateQuantity(item._id, item.quantity + 1)} className="p-1 hover:bg-primary-100" disabled={item.quantity >= item.stock}>
                                 <FiPlus size={14} />
                               </button>
                             </div>
-
-                            <button
-                              onClick={() => handleBuyNow(item)}
-                              className="bg-accent-500 hover:bg-accent-600 text-white font-medium text-sm px-3 py-1.5 rounded flex items-center gap-1 mt-2 transition-colors"
-                            >
+                            <button onClick={() => handleBuyNow(item)} className="bg-accent-500 hover:bg-accent-600 text-white font-medium text-sm px-3 py-1.5 rounded flex items-center gap-1 mt-2 transition-colors">
                               <FiZap size={14} />
                               Mua ngay
                             </button>
@@ -206,22 +164,12 @@ const Cart = () => {
                     </div>
                   </div>
                 ))}
-
-                <button
-                  onClick={clearCart}
-                  className="text-red-600 hover:text-red-700 font-medium"
-                >
-                  Xóa tất cả
-                </button>
+                <button onClick={clearCart} className="text-red-600 hover:text-red-700 font-medium">Xóa tất cả</button>
               </div>
 
-              {/* Order Summary */}
               <div className="lg:col-span-1">
                 <div className="card p-6 sticky top-20">
-                  <h2 className="text-xl font-semibold text-primary-900 mb-4">
-                    Tổng đơn hàng
-                  </h2>
-
+                  <h2 className="text-xl font-semibold text-primary-900 mb-4">Tổng đơn hàng</h2>
                   <div className="space-y-3 mb-6">
                     <div className="flex justify-between text-primary-700">
                       <span>Tạm tính</span>
@@ -236,20 +184,8 @@ const Cart = () => {
                       <span className="text-accent-600">{formatCurrency(getTotal())}</span>
                     </div>
                   </div>
-
-                  <button
-                    onClick={() => navigate('/checkout')}
-                    className="w-full btn-primary mb-3"
-                  >
-                    Thanh toán
-                  </button>
-
-                  <Link
-                    to="/products"
-                    className="block text-center text-primary-700 hover:text-primary-900 font-medium"
-                  >
-                    Tiếp tục mua sắm
-                  </Link>
+                  <button onClick={() => navigate('/checkout')} className="w-full btn-primary mb-3">Thanh toán</button>
+                  <Link to="/products" className="block text-center text-primary-700 hover:text-primary-900 font-medium">Tiếp tục mua sắm</Link>
                 </div>
               </div>
             </div>
@@ -265,70 +201,43 @@ const Cart = () => {
           ) : orders.length === 0 ? (
             <div className="text-center py-20">
               <FiPackage className="mx-auto text-primary-300 mb-4" size={80} />
-              <h2 className="text-2xl font-bold text-primary-900 mb-4">
-                Chưa có đơn hàng nào
-              </h2>
-              <p className="text-primary-600 mb-8">
-                Hãy mua sắm để tạo đơn hàng đầu tiên
-              </p>
-              <Link to="/products" className="btn-primary">
-                Mua sắm ngay
-              </Link>
+              <h2 className="text-2xl font-bold text-primary-900 mb-4">Chưa có đơn hàng nào</h2>
+              <p className="text-primary-600 mb-8">Hãy mua sắm để tạo đơn hàng đầu tiên</p>
+              <Link to="/products" className="btn-primary">Mua sắm ngay</Link>
             </div>
           ) : (
             <div className="space-y-4">
               {orders.map((order) => (
-                <div
-                  key={order._id}
-                  className="card p-6 hover:shadow-lg transition-shadow"
-                >
+                <div key={order._id} className="card p-6 hover:shadow-lg transition-shadow">
                   <div className="flex justify-between items-start mb-4">
-                    <Link
-                      to={`/orders/${order._id}`}
-                      className="flex-1"
-                    >
+                    <Link to={`/orders/${order._id}`} className="flex-1">
                       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                        {/* Mã đơn hàng */}
                         <div>
                           <p className="text-sm text-primary-600 mb-1">Mã đơn hàng</p>
                           <p className="font-semibold text-primary-900">#{order._id.slice(-8).toUpperCase()}</p>
                         </div>
-
-                        {/* Ngày đặt */}
                         <div>
                           <p className="text-sm text-primary-600 mb-1">Ngày đặt</p>
                           <p className="font-medium text-primary-900">{formatDateTime(order.createdAt)}</p>
                         </div>
-
-                        {/* Trạng thái */}
                         <div>
                           <p className="text-sm text-primary-600 mb-1">Trạng thái</p>
                           <OrderStatusBadge status={order.status} size="sm" />
                         </div>
-
-                        {/* Thanh toán */}
                         <div>
                           <p className="text-sm text-primary-600 mb-1">Thanh toán</p>
                           <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                            order.isPaid
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-yellow-100 text-yellow-800'
+                            order.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                           }`}>
-                            {order.isPaid ? '✓ Đã thanh toán' : '⏳ Chưa thanh toán'}
+                            {order.paymentStatus === 'paid' ? '✓ Đã thanh toán' : '⏳ Chưa thanh toán'}
                           </div>
                         </div>
-
-                        {/* Tổng tiền */}
                         <div className="text-right">
                           <p className="text-sm text-primary-600 mb-1">Tổng tiền</p>
-                          <p className="text-xl font-bold text-accent-600">
-                            {formatCurrency(order.totalPrice)}
-                          </p>
+                          <p className="text-xl font-bold text-accent-600">{formatCurrency(order.totalPrice)}</p>
                         </div>
                       </div>
                     </Link>
-
-                    {/* Cancel Button - Only for pending orders */}
                     {order.status === 'pending' && (
                       <button
                         onClick={() => {
@@ -343,30 +252,14 @@ const Cart = () => {
                       </button>
                     )}
                   </div>
-
-                  <Link
-                    to={`/orders/${order._id}`}
-                    className="block"
-                  >
-
-                    {/* Progress Bar */}
+                  <Link to={`/orders/${order._id}`} className="block">
                     <div className="mb-4">
                       <OrderProgressBar status={order.status} />
                     </div>
-
-                    {/* Products Preview */}
                     <div className="border-t border-primary-200 pt-4">
                       <div className="flex items-center gap-3">
                         {order.items?.slice(0, 3).map((item, idx) => (
-                          <img
-                            key={idx}
-                            src={getImageUrl(item.product?.images?.[0])}
-                            alt=""
-                            className="w-16 h-16 object-cover rounded"
-                            onError={(e) => {
-                              e.target.src = '/default-product.jpg';
-                            }}
-                          />
+                          <img key={idx} src={getImageUrl(item.product?.images?.[0])} alt="" className="w-16 h-16 object-cover rounded" onError={(e) => { e.target.src = '/default-product.jpg'; }} />
                         ))}
                         {order.items?.length > 3 && (
                           <div className="w-16 h-16 bg-primary-100 rounded flex items-center justify-center text-primary-700 font-medium text-sm">

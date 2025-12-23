@@ -433,6 +433,36 @@ const calculateShippingFeeController = async (req, res) => {
   }
 };
 
+// 8. Khách hàng xác nhận đã nhận hàng
+const confirmDelivery = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Đơn hàng không tồn tại' });
+    }
+
+    // Chỉ chủ đơn hàng mới được xác nhận
+    if (order.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Bạn không có quyền xác nhận đơn này' });
+    }
+
+    // Chỉ xác nhận được khi đang giao
+    if (order.status !== 'shipping') {
+      return res.status(400).json({ success: false, message: 'Đơn hàng không ở trạng thái đang giao' });
+    }
+
+    order.status = 'delivered';
+    order.deliveredAt = Date.now();
+    await order.save();
+
+    res.json({ success: true, message: 'Xác nhận đã nhận hàng thành công', data: order });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   createOrder,
   getMyOrders,
@@ -441,5 +471,6 @@ module.exports = {
   updateOrderStatus,
   cancelOrder,
   getOrderById,
+  confirmDelivery,
   calculateShippingFee: calculateShippingFeeController
 };

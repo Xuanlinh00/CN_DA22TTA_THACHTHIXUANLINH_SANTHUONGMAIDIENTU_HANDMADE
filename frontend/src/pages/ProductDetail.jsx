@@ -8,6 +8,7 @@ import useAuthStore from '../stores/authStore';
 import { formatCurrency } from '../utils/formatters';
 import Loading from '../components/common/Loading';
 import ProductCard from '../components/common/ProductCard';
+import ReviewList from '../components/product/ReviewList';
 import toast from 'react-hot-toast';
 
 const ProductDetail = () => {
@@ -17,9 +18,6 @@ const ProductDetail = () => {
   const { isAuthenticated } = useAuthStore();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [showReviewForm, setShowReviewForm] = useState(false);
-  const [reviewData, setReviewData] = useState({ rating: 5, comment: '' });
-  const [selectedOrder, setSelectedOrder] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['product', id],
@@ -38,23 +36,10 @@ const ProductDetail = () => {
     enabled: !!product?.category?._id,
   });
 
-  // Fetch user's orders to check if they bought this product
-  const { data: ordersData } = useQuery({
-    queryKey: ['user-orders-for-review', id],
-    queryFn: async () => {
-      const response = await fetch('/api/orders', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      return response.json();
-    },
-    enabled: isAuthenticated && !!id,
-  });
-
   // Helper function to get full image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return '/default-product-large.jpg';
     if (imagePath.startsWith('http')) return imagePath;
-    // Remove /api from the URL if present, since images are served at /uploads not /api/uploads
     const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace('/api', '');
     return `${baseUrl}${imagePath}`;
   };
@@ -67,45 +52,13 @@ const ProductDetail = () => {
     }
     
     if (product) {
+      if (product.shop?._id === localStorage.getItem('shopId')) {
+        toast.error('Bạn không thể mua sản phẩm của chính shop mình');
+        return;
+      }
+      
       addToCart(product, quantity);
       toast.success('Đã thêm vào giỏ hàng');
-    }
-  };
-
-  const handleSubmitReview = async (e) => {
-    e.preventDefault();
-    if (!selectedOrder) {
-      toast.error('Vui lòng chọn đơn hàng');
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/products/${id}/reviews`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          rating: reviewData.rating,
-          comment: reviewData.comment,
-          orderId: selectedOrder
-        })
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        toast.success('Đánh giá đã được gửi');
-        setShowReviewForm(false);
-        setReviewData({ rating: 5, comment: '' });
-        setSelectedOrder(null);
-        // Reload product data
-        window.location.reload();
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      toast.error('Lỗi khi gửi đánh giá');
     }
   };
 
@@ -255,6 +208,12 @@ const ProductDetail = () => {
                   navigate('/login');
                   return;
                 }
+                
+                if (product.shop?._id === localStorage.getItem('shopId')) {
+                  toast.error('Bạn không thể mua sản phẩm của chính shop mình');
+                  return;
+                }
+                
                 if (product) {
                   const item = { ...product, quantity };
                   sessionStorage.setItem('tempCart', JSON.stringify([item]));
@@ -300,90 +259,7 @@ const ProductDetail = () => {
 
       {/* Reviews Section */}
       <div className="mt-16 border-t border-primary-200 pt-12">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-semibold text-primary-900">Đánh giá sản phẩm</h2>
-          {isAuthenticated && (
-            <button
-              onClick={() => setShowReviewForm(!showReviewForm)}
-              className="btn-primary"
-            >
-              {showReviewForm ? 'Hủy' : 'Viết đánh giá'}
-            </button>
-          )}
-        </div>
-
-        {/* Review Form */}
-        {showReviewForm && isAuthenticated && (
-          <div className="card p-8 mb-8 bg-primary-50">
-            <h3 className="text-lg font-semibold text-primary-900 mb-6">Viết đánh giá của bạn</h3>
-            
-            {/* Select Order */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-primary-700 mb-2">
-                Chọn đơn hàng *
-              </label>
-              <select
-                value={selectedOrder || ''}
-                onChange={(e) => setSelectedOrder(e.target.value)}
-                className="w-full px-4 py-2.5 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="">-- Chọn đơn hàng --</option>
-                {ordersData?.data?.map((order) => {
-                  const item = order.items.find(i => i.product === id);
-                  if (!item || item.reviewed) return null;
-                  return (
-                    <option key={order._id} value={order._id}>
-                      {order.orderNumber} - {new Date(order.createdAt).toLocaleDateString('vi-VN')}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-
-            <form onSubmit={handleSubmitReview}>
-              {/* Rating */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-primary-700 mb-3">
-                  Đánh giá *
-                </label>
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setReviewData({ ...reviewData, rating: star })}
-                      className="focus:outline-none transition-transform hover:scale-110"
-                    >
-                      <FiStar
-                        size={32}
-                        className={star <= reviewData.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Comment */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-primary-700 mb-2">
-                  Nhận xét *
-                </label>
-                <textarea
-                  value={reviewData.comment}
-                  onChange={(e) => setReviewData({ ...reviewData, comment: e.target.value })}
-                  placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
-                  rows="4"
-                  className="w-full px-4 py-2.5 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
-                  required
-                />
-              </div>
-
-              <button type="submit" className="btn-primary w-full">
-                Gửi đánh giá
-              </button>
-            </form>
-          </div>
-        )}
+        <h2 className="text-2xl font-semibold text-primary-900 mb-8">Đánh giá sản phẩm</h2>
         
         {/* Reviews Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
@@ -427,36 +303,10 @@ const ProductDetail = () => {
         {/* Reviews List */}
         <div className="space-y-6">
           {product.reviews && product.reviews.length > 0 ? (
-            product.reviews.map((review, idx) => (
-              <div key={idx} className="card p-6 border-l-4 border-accent-500">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary-200 flex items-center justify-center">
-                      <FiUser className="text-primary-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-primary-900">{review.userName || 'Khách hàng'}</p>
-                      <p className="text-xs text-primary-500">
-                        {new Date(review.createdAt).toLocaleDateString('vi-VN')}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <FiStar
-                        key={i}
-                        size={16}
-                        className={i < review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <p className="text-primary-700">{review.comment}</p>
-              </div>
-            ))
+            <ReviewList reviews={product.reviews} />
           ) : (
             <div className="text-center py-8 text-primary-600">
-              Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá sản phẩm này!
+              Chưa có đánh giá nào. Hãy mua sản phẩm và đánh giá từ phần đơn hàng!
             </div>
           )}
         </div>

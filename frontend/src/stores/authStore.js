@@ -10,6 +10,12 @@ const useAuthStore = create(
       
       setAuth: (user, token) => {
         localStorage.setItem('token', token);
+        // Lưu shopId nếu user là shop owner
+        if (user?.role === 'shop_owner' && user?.shop?._id) {
+          localStorage.setItem('shopId', user.shop._id);
+        } else {
+          localStorage.removeItem('shopId');
+        }
         set({ user, token, isAuthenticated: true });
       },
       
@@ -19,6 +25,7 @@ const useAuthStore = create(
       
       logout: () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('shopId');
         set({ user: null, token: null, isAuthenticated: false });
       },
       

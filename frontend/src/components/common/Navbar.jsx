@@ -75,15 +75,17 @@ const Navbar = () => {
 
             {isAuthenticated ? (
               <>
-                {/* Cart */}
-                <Link to="/cart" className="relative text-white hover:text-amber-100 transition-colors">
-                  <FiShoppingCart size={24} />
-                  {getItemCount() > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-accent-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {getItemCount()}
-                    </span>
-                  )}
-                </Link>
+                {/* Cart - Only for non-admin users */}
+                {user?.role !== 'admin' && (
+                  <Link to="/cart" className="relative text-white hover:text-amber-100 transition-colors">
+                    <FiShoppingCart size={24} />
+                    {getItemCount() > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-accent-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        {getItemCount()}
+                      </span>
+                    )}
+                  </Link>
+                )}
 
                 {/* Dashboard Links */}
                 {user?.role === 'admin' && (
@@ -209,13 +211,15 @@ const Navbar = () => {
 
               {isAuthenticated ? (
                 <>
-                  <Link
-                    to="/cart"
-                    className="block py-2 text-white hover:text-amber-100"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Giỏ hàng ({getItemCount()})
-                  </Link>
+                  {user?.role !== 'admin' && (
+                    <Link
+                      to="/cart"
+                      className="block py-2 text-white hover:text-amber-100"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Giỏ hàng ({getItemCount()})
+                    </Link>
+                  )}
                   <Link
                     to="/profile"
                     className="block py-2 text-white hover:text-amber-100"

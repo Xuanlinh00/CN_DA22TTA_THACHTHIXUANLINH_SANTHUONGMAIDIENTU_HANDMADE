@@ -1,21 +1,35 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { FiMapPin, FiTruck, FiCreditCard, FiPackage } from 'react-icons/fi';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { FiMapPin, FiTruck, FiCreditCard, FiPackage, FiStar } from 'react-icons/fi';
 import { orderService } from '../services/orderService';
 import { paymentService } from '../services/paymentService';
 import { formatCurrency, formatDateTime, getOrderStatusLabel, getOrderStatusColor } from '../utils/formatters';
 import Loading from '../components/common/Loading';
 import OrderTracking from '../components/order/OrderTracking';
+import ReviewForm from '../components/order/ReviewForm';
 import toast from 'react-hot-toast';
 
 const OrderDetail = () => {
   const { id } = useParams();
+  const queryClient = useQueryClient();
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
+  const [reviewingItem, setReviewingItem] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['order', id],
     queryFn: () => orderService.getById(id),
+  });
+
+  const confirmDeliveryMutation = useMutation({
+    mutationFn: () => orderService.confirmDelivery(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['order', id]);
+      toast.success('Xác nhận đã nhận hàng thành công');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Xác nhận thất bại');
+    },
   });
 
   const handleVNPayPayment = async () => {
@@ -93,6 +107,19 @@ const OrderDetail = () => {
                     <p className="font-bold text-accent-600">
                       {formatCurrency(item.price * item.quantity)}
                     </p>
+                    {/* Nút đánh giá - hiển thị khi đơn hàng đã giao */}
+                    {order.status === 'delivered' && !item.reviewed && (
+                      <button
+                        onClick={() => setReviewingItem(item)}
+                        className="mt-2 text-sm px-3 py-1 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition-colors flex items-center gap-1 mx-auto"
+                      >
+                        <FiStar size={14} />
+                        Đánh giá
+                      </button>
+                    )}
+                    {item.reviewed && (
+                      <p className="mt-2 text-xs text-green-600 font-medium">✓ Đã đánh giá</p>
+                    )}
                   </div>
                 </div>
               ))}
@@ -185,6 +212,21 @@ const OrderDetail = () => {
               </button>
             )}
 
+            {/* Nút xác nhận đã nhận hàng khi đang giao */}
+            {order.status === 'shipping' && (
+              <button 
+                onClick={() => {
+                  if (window.confirm('Bạn xác nhận đã nhận được hàng?')) {
+                    confirmDeliveryMutation.mutate();
+                  }
+                }}
+                disabled={confirmDeliveryMutation.isPending}
+                className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 mt-6"
+              >
+                {confirmDeliveryMutation.isPending ? 'Đang xử lý...' : 'Xác nhận đã nhận hàng'}
+              </button>
+            )}
+
             {order.status === 'pending' && (
               <button className="w-full btn-outline mt-3">
                 Hủy đơn hàng
@@ -193,6 +235,15 @@ const OrderDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Review Form Modal */}
+      {reviewingItem && (
+        <ReviewForm
+          item={reviewingItem}
+          orderId={id}
+          onClose={() => setReviewingItem(null)}
+        />
+      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { FiUsers, FiShoppingBag, FiDollarSign, FiPackage, FiTrendingUp } from 'react-icons/fi';
+import { FiUsers, FiShoppingBag, FiDollarSign, FiTrendingUp } from 'react-icons/fi';
 import { MdStorefront } from 'react-icons/md';
 import { adminService } from '../../services/adminService';
 import { formatCurrency } from '../../utils/formatters';

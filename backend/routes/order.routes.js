@@ -9,6 +9,7 @@ const {
   updateOrderStatus,
   cancelOrder,
   getOrderById,
+  confirmDelivery,
   calculateShippingFee
 } = require('../controllers/order.controller');
 
@@ -20,6 +21,7 @@ router.get('/shop-orders', protect, authorize('shop_owner'), getShopOrders);
 router.get('/:id', protect, getOrderById); // Thêm route lấy chi tiết đơn hàng
 router.patch('/:id/status', protect, authorize('admin', 'shop_owner'), updateOrderStatus);
 router.patch('/:id/cancel', protect, cancelOrder);
+router.patch('/:id/confirm-delivery', protect, confirmDelivery);
 router.get('/', protect, authorize('admin'), getAllOrders);
 
 module.exports = router;

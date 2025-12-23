@@ -152,6 +152,17 @@ const ShopProducts = () => {
   };
 
   const onSubmit = (data) => {
+    // Kiểm tra tên sản phẩm trùng trong cùng cửa hàng
+    const isDuplicate = products.some(product => 
+      product.name.toLowerCase() === data.name.toLowerCase() &&
+      product._id !== editingProduct?._id // Nếu đang edit, bỏ qua sản phẩm hiện tại
+    );
+
+    if (isDuplicate) {
+      toast.error('Tên sản phẩm này đã tồn tại trong cửa hàng của bạn. Vui lòng đổi tên khác.');
+      return;
+    }
+
     if (editingProduct) {
       updateMutation.mutate(data);
     } else {
