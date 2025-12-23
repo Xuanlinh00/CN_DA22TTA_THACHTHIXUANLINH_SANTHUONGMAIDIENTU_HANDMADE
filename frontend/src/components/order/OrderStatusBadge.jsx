@@ -4,11 +4,18 @@ const OrderStatusBadge = ({ status, showIcon = true, size = 'md' }) => {
   const getStatusConfig = (status) => {
     const configs = {
       pending: {
-        label: 'Chờ xác nhận',
+        label: 'Chờ thanh toán',
         icon: FiClock,
         bgColor: 'bg-yellow-100',
         textColor: 'text-yellow-800',
         borderColor: 'border-yellow-200'
+      },
+      paid: {
+        label: 'Đã thanh toán',
+        icon: FiCheckCircle,
+        bgColor: 'bg-green-100',
+        textColor: 'text-green-800',
+        borderColor: 'border-green-200'
       },
       confirmed: {
         label: 'Đã xác nhận',

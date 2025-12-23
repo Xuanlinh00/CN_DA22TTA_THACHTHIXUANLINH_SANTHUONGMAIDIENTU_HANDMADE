@@ -203,8 +203,8 @@ const ProductDetail = () => {
             <div className="flex items-center space-x-2 text-primary-700">
               <FiPackage />
               <span>
-                {product.stock > 0 ? (
-                  <span className="text-green-600 font-medium">Còn {product.stock} sản phẩm</span>
+                {product.stockQuantity > 0 ? (
+                  <span className="text-green-600 font-medium">Còn {product.stockQuantity} sản phẩm</span>
                 ) : (
                   <span className="text-red-600 font-medium">Hết hàng</span>
                 )}
@@ -213,7 +213,7 @@ const ProductDetail = () => {
           </div>
 
           {/* Quantity */}
-          {product.stock > 0 && (
+          {product.stockQuantity > 0 && (
             <div className="mb-6">
               <label className="block text-sm font-medium text-primary-700 mb-2">
                 Số lượng
@@ -228,7 +228,7 @@ const ProductDetail = () => {
                   </button>
                   <span className="px-6 font-medium">{quantity}</span>
                   <button
-                    onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                    onClick={() => setQuantity(Math.min(product.stockQuantity, quantity + 1))}
                     className="px-4 py-2 hover:bg-primary-100"
                   >
                     +
@@ -242,7 +242,7 @@ const ProductDetail = () => {
           <div className="flex gap-4 mb-8">
             <button
               onClick={handleAddToCart}
-              disabled={product.stock === 0}
+              disabled={product.stockQuantity === 0}
               className="flex-1 btn-primary flex items-center justify-center space-x-2"
             >
               <FiShoppingCart />
@@ -261,7 +261,7 @@ const ProductDetail = () => {
                   navigate('/checkout');
                 }
               }}
-              disabled={product.stock === 0}
+              disabled={product.stockQuantity === 0}
               className="flex-1 bg-accent-500 hover:bg-accent-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               <FiShoppingCart />

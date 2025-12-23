@@ -32,7 +32,7 @@ const Navbar = () => {
   return (
     <nav className="bg-gradient-to-r from-amber-800 to-orange-700 shadow-lg sticky top-0 z-50">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-amber-800 flex items-center justify-center bg-white flex-shrink-0">
@@ -72,9 +72,6 @@ const Navbar = () => {
             <Link to="/shops" className="text-white hover:text-amber-100 font-medium transition-colors">
               Cửa hàng
             </Link>
-            <Link to="/track-order" className="text-white hover:text-amber-100 font-medium transition-colors">
-              Theo dõi đơn hàng
-            </Link>
 
             {isAuthenticated ? (
               <>
@@ -95,7 +92,7 @@ const Navbar = () => {
                     className="flex items-center space-x-1 text-white hover:text-amber-100 transition-colors"
                   >
                     <MdDashboard size={20} />
-                    <span>Quản trị</span>
+                    <span>Quản trị viên</span>
                   </Link>
                 )}
 
@@ -209,13 +206,6 @@ const Navbar = () => {
               >
                 Cửa hàng
               </Link>
-              <Link
-                to="/track-order"
-                className="block py-2 text-white hover:text-amber-100 font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Theo dõi đơn hàng
-              </Link>
 
               {isAuthenticated ? (
                 <>
@@ -246,7 +236,7 @@ const Navbar = () => {
                       className="block py-2 text-white hover:text-amber-100"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      Admin Dashboard
+                      Dashboard
                     </Link>
                   )}
                   {user?.role === 'shop_owner' && (

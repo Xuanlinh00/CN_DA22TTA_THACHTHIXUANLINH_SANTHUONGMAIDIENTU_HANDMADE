@@ -21,6 +21,7 @@ const Orders = () => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'pending': return FiClock;
+      case 'paid': return FiCheckCircle;
       case 'confirmed': return FiCheckCircle;
       case 'processing': return FiPackage;
       case 'shipping': return FiTruck;
@@ -31,7 +32,7 @@ const Orders = () => {
   };
 
   const getStatusProgress = (status) => {
-    const statusOrder = ['pending', 'confirmed', 'processing', 'shipping', 'delivered'];
+    const statusOrder = ['pending', 'paid', 'processing', 'shipping', 'delivered'];
     const currentIndex = statusOrder.indexOf(status);
     return currentIndex >= 0 ? ((currentIndex + 1) / statusOrder.length) * 100 : 0;
   };
@@ -88,6 +89,7 @@ const Orders = () => {
   const statusCounts = {
     all: orders.length,
     pending: orders.filter(o => o.status === 'pending').length,
+    paid: orders.filter(o => o.status === 'paid').length,
     processing: orders.filter(o => o.status === 'processing').length,
     shipping: orders.filter(o => o.status === 'shipping').length,
     delivered: orders.filter(o => o.status === 'delivered').length,
@@ -105,7 +107,8 @@ const Orders = () => {
         <div className="flex flex-wrap gap-2">
           {[
             { key: 'all', label: 'Tất cả', icon: FiPackage },
-            { key: 'pending', label: 'Chờ xác nhận', icon: FiClock },
+            { key: 'pending', label: 'Chờ thanh toán', icon: FiClock },
+            { key: 'paid', label: 'Đã thanh toán', icon: FiCheckCircle },
             { key: 'processing', label: 'Đang chuẩn bị', icon: FiPackage },
             { key: 'shipping', label: 'Đang giao', icon: FiTruck },
             { key: 'delivered', label: 'Đã giao', icon: FiCheckCircle },

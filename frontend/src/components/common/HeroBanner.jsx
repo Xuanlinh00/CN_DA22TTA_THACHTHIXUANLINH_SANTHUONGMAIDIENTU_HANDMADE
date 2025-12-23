@@ -35,7 +35,7 @@ const HeroBanner = ({ slides = [] }) => {
   return (
     <div className="relative w-full overflow-hidden bg-gradient-to-r from-orange-200 to-orange-100">
       {/* Slides container */}
-      <div className="relative w-full min-h-[400px] md:min-h-[480px]">
+      <div className="relative w-full min-h-[360px] md:min-h-[440px]">
         {slides.map((slide, index) => (
           <div
             key={index}
