@@ -11,12 +11,14 @@ import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 import Products from './pages/Products';
+import Categories from './pages/Categories';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import TrackOrder from './pages/TrackOrder';
+import Messages from './pages/Messages';
 import Profile from './pages/Profile';
 
 import PaymentResult from './pages/PaymentResult';
@@ -27,6 +29,7 @@ import ShopDetail from './pages/ShopDetail';
 import ShopDashboard from './pages/shop/ShopDashboard';
 import ShopProducts from './pages/shop/ShopProducts';
 import ShopOrders from './pages/shop/ShopOrders';
+import ShopMessages from './pages/shop/ShopMessages';
 import ShopSettings from './pages/shop/ShopSettings';
 import CreateShop from './pages/shop/CreateShop';
 
@@ -36,7 +39,9 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminShops from './pages/admin/AdminShops';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
+import AdminMessages from './pages/admin/AdminMessages';
 import AdminCategories from './pages/admin/AdminCategories';
+import AdminCommissions from './pages/admin/AdminCommissions';
 
 
 
@@ -54,6 +59,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/products" element={<Products />} />
+          <Route path="/categories" element={<Categories />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/shops" element={<Shops />} />
           <Route path="/shops/:id" element={<ShopDetail />} />
@@ -91,6 +97,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <OrderDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/messages"
+            element={
+              <ProtectedRoute>
+                <Messages />
               </ProtectedRoute>
             }
           />
@@ -133,6 +147,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['shop_owner']}>
                 <ShopOrders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/shop-dashboard/messages"
+            element={
+              <ProtectedRoute allowedRoles={['shop_owner']}>
+                <ShopMessages />
               </ProtectedRoute>
             }
           />
@@ -187,10 +209,26 @@ function App() {
             }
           />
           <Route
+            path="/admin/messages"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminMessages />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/categories"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminCategories />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/commissions"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminCommissions />
               </ProtectedRoute>
             }
           />

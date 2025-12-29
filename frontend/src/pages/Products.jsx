@@ -80,21 +80,41 @@ const Products = () => {
 
             {/* Category */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-primary-700 mb-2">
+              <label className="block text-sm font-medium text-primary-700 mb-3">
                 Danh mục
               </label>
-              <select
-                value={filters.category}
-                onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="input-field"
-              >
-                <option value="">Tất cả danh mục</option>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                <button
+                  onClick={() => handleFilterChange('category', '')}
+                  className={`w-full text-left p-3 rounded-lg transition-all ${
+                    filters.category === ''
+                      ? 'bg-accent-100 text-accent-700 font-medium'
+                      : 'bg-primary-50 text-primary-700 hover:bg-primary-100'
+                  }`}
+                >
+                  <span className="text-lg mr-2">📦</span>
+                  Tất cả danh mục
+                </button>
                 {categoriesData?.data?.map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.name}
-                  </option>
+                  <button
+                    key={cat._id}
+                    onClick={() => handleFilterChange('category', cat._id)}
+                    className={`w-full text-left p-3 rounded-lg transition-all ${
+                      filters.category === cat._id
+                        ? 'bg-accent-100 text-accent-700 font-medium'
+                        : 'bg-primary-50 text-primary-700 hover:bg-primary-100'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <span className="text-lg flex-shrink-0">{cat.icon || '🎨'}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm">{cat.name}</p>
+                        <p className="text-xs text-primary-600 line-clamp-1">{cat.description}</p>
+                      </div>
+                    </div>
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
 
             {/* Price Range */}

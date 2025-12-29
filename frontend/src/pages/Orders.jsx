@@ -133,20 +133,24 @@ const Orders = () => {
                 </div>
 
                 <div className="border-t border-primary-200 pt-4">
-                  <div className="flex items-center gap-3">
-                    {order.items?.slice(0, 3).map((item, idx) => (
-                      <img
-                        key={idx}
-                        src={getImageUrl(item.product?.images?.[0])}
-                        alt=""
-                        className="w-16 h-16 object-cover rounded"
-                      />
-                    ))}
-                    {order.items?.length > 3 && (
-                      <div className="w-16 h-16 bg-primary-100 rounded flex items-center justify-center text-primary-700 font-medium">
-                        +{order.items.length - 3}
+                  <div className="space-y-2">
+                    {order.items?.map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-3 pb-2 last:pb-0">
+                        <img
+                          src={getImageUrl(item.product?.images?.[0])}
+                          alt={item.product?.name}
+                          className="w-12 h-12 object-cover rounded"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-primary-900 truncate">
+                            {item.product?.name}
+                          </p>
+                          <p className="text-xs text-primary-600">
+                            x{item.quantity} - {formatCurrency(item.price * item.quantity)}
+                          </p>
+                        </div>
                       </div>
-                    )}
+                    ))}
                   </div>
                 </div>
               </Link>

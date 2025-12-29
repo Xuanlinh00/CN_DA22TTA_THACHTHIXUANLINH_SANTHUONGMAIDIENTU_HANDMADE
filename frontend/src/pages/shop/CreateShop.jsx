@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { FiMapPin, FiPhone } from 'react-icons/fi';
+import { FiMapPin, FiPhone, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { MdStorefront } from 'react-icons/md';
 import { shopService } from '../../services/shopService';
 import toast from 'react-hot-toast';
@@ -13,6 +13,8 @@ const CreateShop = () => {
   const [coverImageFile, setCoverImageFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [coverImagePreview, setCoverImagePreview] = useState(null);
+  const [showPolicyDetails, setShowPolicyDetails] = useState(false);
+  const [agreedToPolicy, setAgreedToPolicy] = useState(false);
 
   const {
     register,
@@ -37,6 +39,12 @@ const CreateShop = () => {
   };
 
   const onSubmit = async (data) => {
+    // Kiểm tra đã đồng ý chính sách
+    if (!agreedToPolicy) {
+      toast.error('Vui lòng đồng ý với chính sách hoa hồng để tiếp tục');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const formData = new FormData();
@@ -276,6 +284,79 @@ const CreateShop = () => {
                     <p className="text-xs text-primary-500">Tối đa 5MB, định dạng: JPG, PNG</p>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Commission Policy */}
+            <div className="border-t border-primary-200 pt-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg overflow-hidden">
+                {/* Policy Header */}
+                <button
+                  type="button"
+                  onClick={() => setShowPolicyDetails(!showPolicyDetails)}
+                  className="w-full px-6 py-4 flex items-center justify-between hover:bg-blue-100 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">📋</span>
+                    <div className="text-left">
+                      <h3 className="font-semibold text-primary-900">Chính sách hoa hồng Craftify</h3>
+                      <p className="text-sm text-primary-600">Nhấp để xem chi tiết</p>
+                    </div>
+                  </div>
+                  {showPolicyDetails ? (
+                    <FiChevronUp size={20} className="text-primary-600" />
+                  ) : (
+                    <FiChevronDown size={20} className="text-primary-600" />
+                  )}
+                </button>
+
+                {/* Policy Details */}
+                {showPolicyDetails && (
+                  <div className="px-6 py-4 bg-white border-t border-blue-200 space-y-4 text-sm text-primary-700">
+                    <div>
+                      <h4 className="font-semibold text-primary-900 mb-2">💰 Tỷ lệ hoa hồng</h4>
+                      <p>Craftify sẽ thu hoa hồng <span className="font-bold text-accent-600">5%</span> từ doanh thu (giá sản phẩm) của mỗi đơn hàng hoàn thành.</p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-primary-900 mb-2">📊 Cách tính</h4>
+                      <p>Hoa hồng = Tổng tiền hàng × 5%</p>
+                      <p className="text-xs text-primary-600 mt-1">Ví dụ: Nếu bạn bán sản phẩm 100.000đ, Craftify sẽ thu 5.000đ</p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-primary-900 mb-2">✅ Khi nào tính hoa hồng</h4>
+                      <p>Hoa hồng chỉ được tính khi đơn hàng đã được giao thành công cho khách hàng.</p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-primary-900 mb-2">🚚 Phí vận chuyển</h4>
+                      <p>Phí vận chuyển không tính vào hoa hồng. Bạn sẽ nhận toàn bộ phí vận chuyển từ khách hàng.</p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-primary-900 mb-2">💳 Thanh toán</h4>
+                      <p>Doanh thu sau khi trừ hoa hồng sẽ được chuyển vào tài khoản ngân hàng của bạn hàng tháng.</p>
+                    </div>
+                    <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                      <p className="text-xs text-yellow-800">
+                        <span className="font-semibold">⚠️ Lưu ý:</span> Bằng cách đăng ký cửa hàng, bạn đồng ý với chính sách hoa hồng này. Nếu có thắc mắc, vui lòng liên hệ với chúng tôi.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Agreement Checkbox */}
+              <div className="mt-4 flex items-start gap-3 p-4 bg-primary-50 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="policy-agreement"
+                  checked={agreedToPolicy}
+                  onChange={(e) => setAgreedToPolicy(e.target.checked)}
+                  className="mt-1 w-5 h-5 rounded border-primary-300 cursor-pointer"
+                />
+                <label htmlFor="policy-agreement" className="flex-1 cursor-pointer">
+                  <p className="text-sm text-primary-900">
+                    <span className="font-semibold">Tôi đồng ý</span> với chính sách hoa hồng 5% của Craftify và hiểu rằng hoa hồng sẽ được tính từ doanh thu của mỗi đơn hàng hoàn thành.
+                  </p>
+                </label>
               </div>
             </div>
 

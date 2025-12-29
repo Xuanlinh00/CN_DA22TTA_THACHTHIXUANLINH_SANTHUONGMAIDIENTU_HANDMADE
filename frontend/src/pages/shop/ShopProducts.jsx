@@ -402,7 +402,7 @@ const ShopProducts = () => {
                   <input
                     {...register('material')}
                     className="input-field"
-                    placeholder="VD: Cotton, Linen..."
+                    placeholder="Ví dụ: Cotton, Linen..."
                   />
                 </div>
                 <div>
@@ -412,7 +412,7 @@ const ShopProducts = () => {
                   <input
                     {...register('dimensions')}
                     className="input-field"
-                    placeholder="VD: 10x10x5cm"
+                    placeholder="Ví dụ: 10x10x5cm"
                   />
                 </div>
               </div>
@@ -450,7 +450,7 @@ const ShopProducts = () => {
                 <input
                   {...register('tags')}
                   className="input-field"
-                  placeholder="handmade, unique, gift"
+                  placeholder="handmade, độc đáo, quà tặng"
                 />
               </div>
 

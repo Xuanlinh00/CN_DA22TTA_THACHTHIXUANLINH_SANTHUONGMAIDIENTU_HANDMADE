@@ -3,7 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { FiMapPin, FiPhone, FiStar } from 'react-icons/fi';
 import { shopService } from '../services/shopService';
 import { productService } from '../services/productService';
+import { categoryService } from '../services/categoryService';
 import ProductCard from '../components/common/ProductCard';
+import ShopSidebar from '../components/shop/ShopSidebar';
 import Loading from '../components/common/Loading';
 
 const ShopDetail = () => {
@@ -20,9 +22,14 @@ const ShopDetail = () => {
     enabled: !!id,
   });
 
+  const { data: categoriesData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: categoryService.getAll,
+  });
+
   // Helper function to get full image URL
   const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://via.placeholder.com/150';
+    if (!imagePath) return '/default-shop-avatar.jpg';
     if (imagePath.startsWith('http')) return imagePath;
     // Remove /api from the URL if present, since images are served at /uploads not /api/uploads
     const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace('/api', '');
@@ -33,6 +40,21 @@ const ShopDetail = () => {
 
   const shop = shopData?.data;
   if (!shop) return <div className="container mx-auto px-4 py-20 text-center">Không tìm thấy cửa hàng</div>;
+
+  // Lấy danh mục sản phẩm của shop này
+  const shopCategories = new Map();
+  productsData?.data?.forEach(product => {
+    if (product.category) {
+      const catId = product.category._id;
+      if (!shopCategories.has(catId)) {
+        shopCategories.set(catId, {
+          ...product.category,
+          count: 0
+        });
+      }
+      shopCategories.get(catId).count += 1;
+    }
+  });
 
   return (
     <div>
@@ -45,7 +67,7 @@ const ShopDetail = () => {
               alt={shop.shopName}
               className="w-32 h-32 rounded-full border-4 border-white object-cover"
               onError={(e) => {
-                e.target.src = 'https://via.placeholder.com/150';
+                e.target.src = '/default-shop-avatar.jpg';
               }}
             />
 
@@ -83,25 +105,35 @@ const ShopDetail = () => {
         </div>
       </div>
 
-      {/* Shop Products */}
+      {/* Shop Products with Sidebar */}
       <div className="container mx-auto px-4 py-12">
-        <h2 className="text-2xl font-sans font-bold text-primary-900 mb-8">
-          Sản phẩm của cửa hàng
-        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <ShopSidebar shop={shop} products={productsData?.data} categories={categoriesData?.data} />
+          </div>
 
-        {productsLoading ? (
-          <Loading />
-        ) : productsData?.data?.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {productsData.data.map((product) => (
-              <ProductCard key={product._id} product={product} />
-            ))}
+          {/* Products Grid */}
+          <div className="lg:col-span-3">
+            <h2 className="text-2xl font-sans font-bold text-primary-900 mb-8">
+              Sản phẩm của cửa hàng
+            </h2>
+
+            {productsLoading ? (
+              <Loading />
+            ) : productsData?.data?.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {productsData.data.map((product) => (
+                  <ProductCard key={product._id} product={product} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-primary-600">Cửa hàng chưa có sản phẩm nào</p>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-primary-600">Cửa hàng chưa có sản phẩm nào</p>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

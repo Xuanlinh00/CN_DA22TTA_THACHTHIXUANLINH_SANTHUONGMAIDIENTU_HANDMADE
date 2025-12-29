@@ -10,11 +10,11 @@ import useAuthStore from '../stores/authStore';
 
 const Home = () => {
   const { user } = useAuthStore();
-  // Lấy sản phẩm được tìm kiếm và mua nhiều nhất
+  // Lấy sản phẩm được tìm kiếm và mua nhiều nhất (18 sản phẩm)
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: ['featured-products'],
     queryFn: async () => {
-      const response = await fetch('/api/products/featured?limit=8');
+      const response = await fetch('/api/products/featured?limit=18');
       return response.json();
     },
   });
@@ -105,18 +105,29 @@ const Home = () => {
                   <h2 className="text-xl font-sans font-bold text-primary-900 mb-4">
                     Danh mục sản phẩm
                   </h2>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {categoriesData.data.slice(0, 6).map((category) => (
                       <Link
                         key={category._id}
                         to={`/products?category=${category._id}`}
-                        className="card p-4 flex items-center gap-3 hover:shadow-lg transition-shadow"
+                        className="card p-4 hover:shadow-lg transition-all hover:bg-primary-50"
                       >
-                        <div className="text-2xl">{category.icon || '🎨'}</div>
-                        <h3 className="font-semibold text-primary-900">{category.name}</h3>
+                        <div className="flex items-start gap-3">
+                          <div className="text-3xl flex-shrink-0">{category.icon || '🎨'}</div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-primary-900 text-sm">{category.name}</h3>
+                            <p className="text-xs text-primary-600 mt-1 line-clamp-2">{category.description}</p>
+                          </div>
+                        </div>
                       </Link>
                     ))}
                   </div>
+                  <Link 
+                    to="/products" 
+                    className="mt-4 w-full btn-outline text-center text-sm"
+                  >
+                    Xem tất cả danh mục
+                  </Link>
                 </div>
               )}
             </div>

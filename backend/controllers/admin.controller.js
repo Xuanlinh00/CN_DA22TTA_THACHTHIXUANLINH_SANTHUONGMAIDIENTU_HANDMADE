@@ -47,13 +47,16 @@ const getAllShops = async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
+    const status = req.query.status || 'active'; // Mặc định lấy shops active
 
-    const shops = await Shop.find()
+    const query = status === 'all' ? {} : { status };
+
+    const shops = await Shop.find(query)
       .populate('user', 'name email')
       .skip((page - 1) * limit)
       .limit(limit);
 
-    const total = await Shop.countDocuments();
+    const total = await Shop.countDocuments(query);
 
     res.status(200).json({
       success: true,
@@ -126,17 +129,50 @@ const updateUserRole = async (req, res) => {
   }
 };
 
-// Tính hoa hồng (commission) cho admin
+// Tính hoa hồng (commission) cho admin - theo % doanh thu của shop
 const calculateCommission = async (req, res) => {
   try {
-    const completedOrders = await Order.find({ orderStatus: 'completed' });
-    const totalRevenue = completedOrders.reduce((sum, order) => sum + order.totalPrice, 0);
-    const commissionRate = 0.1; // 10%
-    const commission = totalRevenue * commissionRate;
+    // Lấy tất cả đơn hàng đã hoàn thành
+    const completedOrders = await Order.find({ status: 'delivered' })
+      .populate('items.shop', 'shopName');
+    
+    // Tính hoa hồng từ subtotal (không tính phí ship)
+    let totalCommission = 0;
+    const shopCommissions = {};
+
+    completedOrders.forEach(order => {
+      // Tính hoa hồng cho từng shop trong đơn hàng
+      order.items.forEach(item => {
+        const shopId = item.shop._id.toString();
+        const itemCommission = item.subtotal * (order.commissionRate || 0.05); // 5% mặc định
+        
+        if (!shopCommissions[shopId]) {
+          shopCommissions[shopId] = {
+            shopName: item.shop.shopName,
+            revenue: 0,
+            commission: 0,
+            orders: 0
+          };
+        }
+        
+        shopCommissions[shopId].revenue += item.subtotal;
+        shopCommissions[shopId].commission += itemCommission;
+        shopCommissions[shopId].orders += 1;
+        totalCommission += itemCommission;
+      });
+    });
+
+    const totalRevenue = completedOrders.reduce((sum, order) => sum + order.subtotal, 0);
 
     res.status(200).json({
       success: true,
-      data: { totalRevenue, commission },
+      data: {
+        totalRevenue,
+        totalCommission,
+        commissionRate: 0.05, // 5%
+        shopCommissions: Object.values(shopCommissions),
+        totalOrders: completedOrders.length
+      },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Không thể tính hoa hồng: ' + error.message });
@@ -145,13 +181,19 @@ const calculateCommission = async (req, res) => {
 
 const getRevenueStats = async (req, res) => {
   try {
-    const completedOrders = await Order.find({ orderStatus: 'completed' });
-    const totalRevenue = completedOrders.reduce((sum, order) => sum + order.totalPrice, 0);
+    const completedOrders = await Order.find({ status: 'delivered' });
+    const totalRevenue = completedOrders.reduce((sum, order) => sum + order.subtotal, 0);
+    const totalCommission = completedOrders.reduce((sum, order) => sum + (order.commissionAmount || 0), 0);
     const totalOrders = completedOrders.length;
 
     res.status(200).json({
       success: true,
-      data: { totalRevenue, totalOrders },
+      data: { 
+        totalRevenue, 
+        totalCommission,
+        totalOrders,
+        commissionRate: 0.05 // 5%
+      },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Không thể thống kê: ' + error.message });
@@ -173,6 +215,37 @@ const getOrderStats = async (req, res) => {
   }
 };
 
+const getMonthlyRevenue = async (req, res) => {
+  try {
+    const year = Number(req.query.year) || new Date().getFullYear();
+    const monthlyData = [];
+
+    for (let month = 0; month < 12; month++) {
+      const startDate = new Date(year, month, 1);
+      const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+
+      const orders = await Order.find({
+        status: 'delivered',
+        createdAt: { $gte: startDate, $lte: endDate }
+      });
+
+      const revenue = orders.reduce((sum, order) => sum + order.subtotal, 0);
+      const commission = orders.reduce((sum, order) => sum + (order.commissionAmount || 0), 0);
+      
+      monthlyData.push({
+        month: month + 1,
+        revenue: revenue,
+        commission: commission,
+        orders: orders.length
+      });
+    }
+
+    res.status(200).json({ success: true, data: monthlyData });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Không thể thống kê doanh thu: ' + error.message });
+  }
+};
+
 module.exports = {
   // Shop
   getPendingShops,
@@ -186,5 +259,6 @@ module.exports = {
   // Stats
   getRevenueStats,
   getOrderStats,
+  getMonthlyRevenue,
 calculateCommission,
 };

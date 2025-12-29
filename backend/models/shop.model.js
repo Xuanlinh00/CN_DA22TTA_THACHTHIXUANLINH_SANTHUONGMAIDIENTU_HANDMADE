@@ -30,6 +30,16 @@ const shopSchema = new mongoose.Schema({
   approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   approvedAt: { type: Date },
 
+  // Thông tin hoa hồng
+  totalCommission: { type: Number, default: 0 }, // Tổng hoa hồng phải trả
+  paidCommission: { type: Number, default: 0 }, // Hoa hồng đã trả
+  commissionPaidAt: { type: Date }, // Lần trả hoa hồng gần nhất
+  commissionStatus: { 
+    type: String, 
+    enum: ['unpaid', 'partial', 'paid'], 
+    default: 'unpaid' 
+  }, // Trạng thái thanh toán hoa hồng
+
 }, { timestamps: true });
 
 module.exports = mongoose.model('Shop', shopSchema);

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FiTrash2, FiEdit } from 'react-icons/fi';
+import { FiEdit } from 'react-icons/fi';
 import { adminService } from '../../services/adminService';
 import { formatDateTime } from '../../utils/formatters';
 import Loading from '../../components/common/Loading';
@@ -13,17 +13,6 @@ const AdminUsers = () => {
     queryFn: adminService.getAllUsers,
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: adminService.deleteUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['admin-users']);
-      toast.success('Xóa người dùng thành công');
-    },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Xóa thất bại');
-    },
-  });
-
   const updateRoleMutation = useMutation({
     mutationFn: ({ id, role }) => adminService.updateUserRole(id, role),
     onSuccess: () => {
@@ -34,12 +23,6 @@ const AdminUsers = () => {
       toast.error(error.response?.data?.message || 'Cập nhật thất bại');
     },
   });
-
-  const handleDelete = (id) => {
-    if (window.confirm('Bạn có chắc muốn xóa người dùng này?')) {
-      deleteMutation.mutate(id);
-    }
-  };
 
   const handleRoleChange = (id, newRole) => {
     if (window.confirm(`Bạn có chắc muốn đổi vai trò thành ${newRole}?`)) {
@@ -115,14 +98,7 @@ const AdminUsers = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
-                    {user.role !== 'admin' && (
-                      <button
-                        onClick={() => handleDelete(user._id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <FiTrash2 size={18} />
-                      </button>
-                    )}
+                    {/* Không có nút xóa - để bảo vệ dữ liệu đơn hàng */}
                   </td>
                 </tr>
               ))}

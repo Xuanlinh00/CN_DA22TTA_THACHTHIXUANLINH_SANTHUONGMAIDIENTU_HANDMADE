@@ -6,6 +6,8 @@ import { orderService } from '../../services/orderService';
 import { formatCurrency } from '../../utils/formatters';
 import Loading from '../../components/common/Loading';
 import ShopLayout from '../../components/layout/ShopLayout';
+import FloatingChat from '../../components/common/FloatingChat';
+import ShopRevenueChart from '../../components/shop/ShopRevenueChart';
 
 const ShopDashboard = () => {
   const { data: shopData, isLoading: shopLoading } = useQuery({
@@ -141,7 +143,12 @@ const ShopDashboard = () => {
             <p className="text-2xl font-bold text-green-600">{formatCurrency(totalRevenue)}</p>
           </div>
         </div>
+
+        {/* Revenue Chart */}
+        <ShopRevenueChart />
       </div>
+
+      <FloatingChat />
     </ShopLayout>
   );
 };

@@ -69,6 +69,9 @@ const Navbar = () => {
             <Link to="/products" className="text-white hover:text-amber-100 font-medium transition-colors">
               Sản phẩm
             </Link>
+            <Link to="/categories" className="text-white hover:text-amber-100 font-medium transition-colors">
+              Danh mục
+            </Link>
             <Link to="/shops" className="text-white hover:text-amber-100 font-medium transition-colors">
               Cửa hàng
             </Link>
@@ -200,6 +203,13 @@ const Navbar = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Sản phẩm
+              </Link>
+              <Link
+                to="/categories"
+                className="block py-2 text-white hover:text-amber-100 font-medium"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Danh mục
               </Link>
               <Link
                 to="/shops"

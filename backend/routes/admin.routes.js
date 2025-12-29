@@ -14,6 +14,8 @@ const {
   // Stats
   getRevenueStats,
   getOrderStats,
+  getMonthlyRevenue,
+  calculateCommission,
 } = require('../controllers/admin.controller.js');
 
 // Áp dụng middleware cho tất cả route admin: protect + chỉ cho phép role 'admin'
@@ -33,5 +35,7 @@ router.put('/users/:id/role', updateUserRole);
 // Stats
 router.get('/stats/revenue', getRevenueStats);
 router.get('/stats/orders', getOrderStats);
+router.get('/stats/monthly-revenue', getMonthlyRevenue);
+router.get('/stats/commission', calculateCommission);
 
 module.exports = router;

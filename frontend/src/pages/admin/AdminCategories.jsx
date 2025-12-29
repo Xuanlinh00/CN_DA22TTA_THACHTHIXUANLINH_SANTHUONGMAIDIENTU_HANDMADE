@@ -108,20 +108,31 @@ const AdminCategories = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {categories.map((category) => (
-          <div key={category._id} className="card p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="text-4xl">{category.icon || '📦'}</div>
-              <div className="flex space-x-2">
-                <button onClick={() => handleEdit(category)} className="text-primary-600 hover:text-primary-900">
-                  <FiEdit size={18} />
-                </button>
-                <button onClick={() => handleDelete(category._id)} className="text-red-600 hover:text-red-900">
-                  <FiTrash2 size={18} />
-                </button>
-              </div>
+          <div key={category._id} className="card p-6 hover:shadow-lg transition-shadow">
+            <div className="flex flex-col items-center text-center mb-4">
+              <div className="text-6xl mb-3">{category.icon || '📦'}</div>
+              <h3 className="text-lg font-semibold text-primary-900">{category.name}</h3>
+              <p className="text-xs text-primary-600 mt-1">{category.description}</p>
             </div>
-            <h3 className="text-lg font-semibold text-primary-900 mb-2">{category.name}</h3>
-            <p className="text-sm text-primary-600">{category.description}</p>
+            
+            <div className="flex gap-2 justify-center pt-4 border-t border-primary-200">
+              <button 
+                onClick={() => handleEdit(category)} 
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-primary-600 hover:bg-primary-100 rounded-lg transition-colors"
+                title="Chỉnh sửa"
+              >
+                <FiEdit size={16} />
+                <span className="text-sm">Sửa</span>
+              </button>
+              <button 
+                onClick={() => handleDelete(category._id)} 
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                title="Xóa"
+              >
+                <FiTrash2 size={16} />
+                <span className="text-sm">Xóa</span>
+              </button>
+            </div>
           </div>
         ))}
       </div>

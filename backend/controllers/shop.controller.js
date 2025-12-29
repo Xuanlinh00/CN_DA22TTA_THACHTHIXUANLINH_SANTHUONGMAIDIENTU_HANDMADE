@@ -128,7 +128,8 @@ const getAllShops = async (req, res) => {
 // @route GET /api/shops/:id
 const getShopById = async (req, res) => {
   try {
-    const shop = await Shop.findById(req.params.id).populate('user', 'name email');
+    const shop = await Shop.findById(req.params.id)
+      .populate('user', 'name email avatar role _id');
 
     if (!shop) {
       return res.status(404).json({ success: false, message: 'Gian hàng không tồn tại.' });
@@ -142,7 +143,11 @@ const getShopById = async (req, res) => {
        return res.status(403).json({ success: false, message: 'Gian hàng này đang chờ duyệt hoặc bị khoá.' });
     }
 
-    res.json({ success: true, data: shop });
+    // Thêm owner field để frontend dễ sử dụng
+    const shopData = shop.toObject();
+    shopData.owner = shop.user;
+
+    res.json({ success: true, data: shopData });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -240,11 +245,64 @@ const adminApproveShop = async (req, res) => {
   }
 };
 
+// --- 7. LẤY DOANH THU THEO THÁNG (Shop Owner) ---
+// @route GET /api/shops/stats/monthly-revenue
+const getMonthlyRevenue = async (req, res) => {
+  try {
+    const currentYear = new Date().getFullYear();
+    const monthlyData = [];
+    const shop = await Shop.findOne({ user: req.user._id });
+
+    if (!shop) {
+      return res.status(404).json({ success: false, message: 'Gian hàng không tồn tại' });
+    }
+
+    const Order = require('../models/order.model');
+
+    for (let month = 0; month < 12; month++) {
+      const startDate = new Date(currentYear, month, 1);
+      const endDate = new Date(currentYear, month + 1, 0, 23, 59, 59);
+
+      // Tìm tất cả orders có items từ shop này và status là delivered
+      const orders = await Order.find({
+        status: 'delivered',
+        createdAt: { $gte: startDate, $lte: endDate },
+        'items.shop': shop._id
+      });
+
+      // Tính doanh thu từ items của shop này
+      let revenue = 0;
+      let orderCount = 0;
+      
+      orders.forEach(order => {
+        const shopItems = order.items.filter(item => item.shop.toString() === shop._id.toString());
+        if (shopItems.length > 0) {
+          revenue += shopItems.reduce((sum, item) => sum + item.subtotal, 0);
+          orderCount++;
+        }
+      });
+      
+      monthlyData.push({
+        month: month + 1,
+        revenue: revenue,
+        orders: orderCount
+      });
+    }
+
+    console.log('📊 Monthly Revenue Data for shop', shop._id, ':', monthlyData);
+    res.status(200).json({ success: true, data: monthlyData });
+  } catch (error) {
+    console.error('❌ Error getting monthly revenue:', error);
+    res.status(500).json({ success: false, message: 'Không thể thống kê doanh thu: ' + error.message });
+  }
+};
+
 module.exports = {
   createShop,
   getAllShops,
   getShopById,
   getMyShop,
   updateShop,
-  adminApproveShop
+  adminApproveShop,
+  getMonthlyRevenue
 };

@@ -8,8 +8,34 @@ const OrderTracking = ({ order }) => {
       green: 'border-green-500 bg-green-100 text-green-600',
       yellow: 'border-yellow-500 bg-yellow-100 text-yellow-600',
       red: 'border-red-500 bg-red-100 text-red-600',
+      purple: 'border-purple-500 bg-purple-100 text-purple-600',
+      orange: 'border-orange-500 bg-orange-100 text-orange-600',
     };
     return colorClasses[color] || 'border-gray-500 bg-gray-100 text-gray-600';
+  };
+
+  const getCompletedClasses = (color) => {
+    const colorClasses = {
+      blue: 'border-blue-500 bg-blue-500 text-white',
+      green: 'border-green-500 bg-green-500 text-white',
+      yellow: 'border-yellow-500 bg-yellow-500 text-white',
+      red: 'border-red-500 bg-red-500 text-white',
+      purple: 'border-purple-500 bg-purple-500 text-white',
+      orange: 'border-orange-500 bg-orange-500 text-white',
+    };
+    return colorClasses[color] || 'border-gray-500 bg-gray-500 text-white';
+  };
+
+  const getLineColor = (color) => {
+    const colorClasses = {
+      blue: 'bg-blue-500',
+      green: 'bg-green-500',
+      yellow: 'bg-yellow-500',
+      red: 'bg-red-500',
+      purple: 'bg-purple-500',
+      orange: 'bg-orange-500',
+    };
+    return colorClasses[color] || 'bg-gray-500';
   };
 
   const getStatusSteps = () => {
@@ -26,21 +52,21 @@ const OrderTracking = ({ order }) => {
         label: 'Đã xác nhận',
         description: 'Cửa hàng đã xác nhận đơn hàng',
         icon: FiCheckCircle,
-        color: 'green'
+        color: 'purple'
       },
       {
         key: 'processing',
         label: 'Đang chuẩn bị',
         description: 'Cửa hàng đang chuẩn bị sản phẩm',
         icon: FiPackage,
-        color: 'yellow'
+        color: 'orange'
       },
       {
         key: 'shipping',
         label: 'Đang giao hàng',
         description: 'Đơn hàng đang được vận chuyển',
         icon: FiTruck,
-        color: 'blue'
+        color: 'yellow'
       },
       {
         key: 'delivered',
@@ -82,19 +108,6 @@ const OrderTracking = ({ order }) => {
     return 'pending';
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'completed': return 'text-green-600 bg-green-100';
-      case 'current': return 'text-blue-600 bg-blue-100';
-      case 'pending': return 'text-gray-400 bg-gray-100';
-      default: return 'text-gray-400 bg-gray-100';
-    }
-  };
-
-  const getLineColor = (status) => {
-    return status === 'completed' ? 'bg-green-500' : 'bg-gray-300';
-  };
-
   const steps = getStatusSteps();
   const currentStepIndex = getCurrentStepIndex();
 
@@ -117,7 +130,7 @@ const OrderTracking = ({ order }) => {
                 <div className="absolute left-6 top-12 w-0.5 h-16 bg-gray-300">
                   <div 
                     className={`w-full transition-all duration-500 ${
-                      stepStatus === 'completed' ? 'h-full bg-green-500' : 'h-0'
+                      stepStatus === 'completed' ? getLineColor(step.color) : 'h-0'
                     }`}
                   />
                 </div>
@@ -129,7 +142,7 @@ const OrderTracking = ({ order }) => {
                 <div className={`
                   flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300
                   ${stepStatus === 'completed' 
-                    ? 'border-green-500 bg-green-500 text-white' 
+                    ? getCompletedClasses(step.color)
                     : stepStatus === 'current'
                     ? getStepCurrentClasses(step.color)
                     : 'border-gray-300 bg-gray-100 text-gray-400'

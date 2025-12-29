@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FiCheck, FiX, FiTrash2, FiEye } from 'react-icons/fi';
-import { Link } from 'react-router-dom';
+import { FiCheck, FiX, FiTrash2, FiEye, FiX as FiClose } from 'react-icons/fi';
+import { useState } from 'react';
 import { adminService } from '../../services/adminService';
 import { formatDateTime, getShopStatusLabel } from '../../utils/formatters';
 import Loading from '../../components/common/Loading';
@@ -8,10 +8,11 @@ import toast from 'react-hot-toast';
 
 const AdminShops = () => {
   const queryClient = useQueryClient();
+  const [selectedShop, setSelectedShop] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-shops'],
-    queryFn: () => adminService.getAllShops(),
+    queryFn: () => adminService.getAllShops({ status: 'all' }),
   });
 
   const approveMutation = useMutation({
@@ -131,12 +132,13 @@ const AdminShops = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="flex items-center justify-end space-x-2">
-                      <Link
-                        to={`/shops/${shop._id}`}
+                      <button
+                        onClick={() => setSelectedShop(shop)}
                         className="text-blue-600 hover:text-blue-900"
+                        title="Xem chi tiết"
                       >
                         <FiEye size={18} />
-                      </Link>
+                      </button>
                       {shop.status === 'pending' && (
                         <>
                           <button
@@ -170,6 +172,158 @@ const AdminShops = () => {
           </table>
         </div>
       </div>
+
+      {/* Shop Detail Modal */}
+      {selectedShop && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-lg max-w-2xl w-full p-6 my-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-primary-900">
+                Chi tiết cửa hàng
+              </h2>
+              <button
+                onClick={() => setSelectedShop(null)}
+                className="text-primary-400 hover:text-primary-600"
+              >
+                <FiClose size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Shop Header */}
+              <div className="flex items-start gap-4 pb-6 border-b border-primary-200">
+                <img
+                  src={selectedShop.avatar}
+                  alt={selectedShop.shopName}
+                  className="w-24 h-24 rounded-lg object-cover"
+                />
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold text-primary-900 mb-2">
+                    {selectedShop.shopName}
+                  </h3>
+                  <p className="text-primary-600 mb-3">{selectedShop.description}</p>
+                  <span className={`badge ${
+                    selectedShop.status === 'active'
+                      ? 'badge-success'
+                      : selectedShop.status === 'pending'
+                      ? 'badge-warning'
+                      : 'badge-danger'
+                  }`}>
+                    {getShopStatusLabel(selectedShop.status)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Owner Information */}
+              <div>
+                <h4 className="font-semibold text-primary-900 mb-3">👤 Thông tin chủ shop</h4>
+                <div className="bg-primary-50 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-primary-600">Tên:</span>
+                    <span className="font-medium text-primary-900">{selectedShop.user?.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-primary-600">Email:</span>
+                    <span className="font-medium text-primary-900">{selectedShop.user?.email}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div>
+                <h4 className="font-semibold text-primary-900 mb-3">📞 Thông tin liên hệ</h4>
+                <div className="bg-primary-50 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-primary-600">Số điện thoại:</span>
+                    <span className="font-medium text-primary-900">{selectedShop.phone}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Address Information */}
+              <div>
+                <h4 className="font-semibold text-primary-900 mb-3">📍 Địa chỉ</h4>
+                <div className="bg-primary-50 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-primary-600">Đường:</span>
+                    <span className="font-medium text-primary-900">{selectedShop.address?.street}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-primary-600">Phường/Xã:</span>
+                    <span className="font-medium text-primary-900">{selectedShop.address?.ward}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-primary-600">Quận/Huyện:</span>
+                    <span className="font-medium text-primary-900">{selectedShop.address?.district}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-primary-600">Tỉnh/Thành phố:</span>
+                    <span className="font-medium text-primary-900">{selectedShop.address?.city}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Commission Policy Info */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-semibold text-blue-900 mb-2">💰 Chính sách hoa hồng</h4>
+                <p className="text-sm text-blue-800">
+                  Chủ shop đã đồng ý với chính sách hoa hồng 5% từ doanh thu của mỗi đơn hàng hoàn thành.
+                </p>
+              </div>
+
+              {/* Dates */}
+              <div>
+                <h4 className="font-semibold text-primary-900 mb-3">📅 Thông tin khác</h4>
+                <div className="bg-primary-50 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-primary-600">Ngày tạo:</span>
+                    <span className="font-medium text-primary-900">{formatDateTime(selectedShop.createdAt)}</span>
+                  </div>
+                  {selectedShop.approvedAt && (
+                    <div className="flex justify-between">
+                      <span className="text-primary-600">Ngày duyệt:</span>
+                      <span className="font-medium text-primary-900">{formatDateTime(selectedShop.approvedAt)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              {selectedShop.status === 'pending' && (
+                <div className="flex gap-3 pt-4 border-t border-primary-200">
+                  <button
+                    onClick={() => {
+                      handleApprove(selectedShop._id, 'active');
+                      setSelectedShop(null);
+                    }}
+                    className="flex-1 btn-primary flex items-center justify-center gap-2"
+                  >
+                    <FiCheck size={18} />
+                    Duyệt cửa hàng
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleApprove(selectedShop._id, 'rejected');
+                      setSelectedShop(null);
+                    }}
+                    className="flex-1 btn-outline text-red-600 hover:bg-red-50 flex items-center justify-center gap-2"
+                  >
+                    <FiX size={18} />
+                    Từ chối
+                  </button>
+                </div>
+              )}
+
+              <button
+                onClick={() => setSelectedShop(null)}
+                className="w-full btn-outline"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

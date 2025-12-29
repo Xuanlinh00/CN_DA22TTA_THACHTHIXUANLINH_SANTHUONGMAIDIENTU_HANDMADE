@@ -97,7 +97,7 @@ const Register = () => {
                     },
                   })}
                   className="input-field pl-10"
-                  placeholder="your@email.com"
+                  placeholder="email@example.com"
                 />
               </div>
               {errors.email && (

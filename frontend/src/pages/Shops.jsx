@@ -22,7 +22,7 @@ const Shops = () => {
 
   // Helper function to get full image URL
   const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://via.placeholder.com/150';
+    if (!imagePath) return '/default-shop-avatar.jpg';
     if (imagePath.startsWith('http')) return imagePath;
     // Remove /api from the URL if present, since images are served at /uploads not /api/uploads
     const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace('/api', '');
@@ -66,7 +66,7 @@ const Shops = () => {
                     alt=""
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/800x200';
+                      e.target.src = '/default-shop-avatar.jpg';
                     }}
                   />
                 </div>
@@ -80,7 +80,7 @@ const Shops = () => {
                       alt={shop.shopName}
                       className="w-24 h-24 rounded-full border-4 border-white object-cover"
                       onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/150';
+                        e.target.src = '/default-shop-avatar.jpg';
                       }}
                     />
                   </div>

@@ -1,7 +1,7 @@
 const crypto = require('crypto'); // Thư viện có sẵn của Node.js để tạo token
 const User = require('../models/user.model');
 const generateToken = require('../utils/generateToken');
-const sendEmail = require('../utils/sendEmail'); // (Tuỳ chọn) Bạn cần file này để gửi mail thật
+const sendEmail = require('../utils/sendEmail'); // Gửi email
 
 // 1. Đăng ký
 const registerUser = async (req, res) => {
@@ -133,14 +133,14 @@ const updateProfile = async (req, res) => {
 // --- CÁC HÀM MỚI BỔ SUNG ---
 
 // 6. Quên mật khẩu (Gửi email token)
-// @route POST /api/users/forgot-password
+// @route POST /api/auth/forgot-password
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({ message: 'Email không tồn tại trong hệ thống' });
+      return res.status(404).json({ success: false, message: 'Email không tồn tại trong hệ thống' });
     }
 
     // Tạo token ngẫu nhiên
@@ -158,34 +158,54 @@ const forgotPassword = async (req, res) => {
     await user.save();
 
     // Tạo URL reset (Frontend URL)
-    // Ví dụ: http://localhost:3000/reset-password/TOKEN_O_DAY
-    const resetUrl = `${req.protocol}://${req.get('host')}/api/users/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
 
-    // --- GỬI EMAIL (Logic giả lập) ---
-    // Nếu bạn chưa cấu hình Nodemailer, hãy dùng console.log để lấy token test
-    console.log(`Email Reset Token: ${resetToken}`); 
-    console.log(`Reset URL: ${resetUrl}`);
+    // Nội dung email
+    const message = `Bạn nhận được email này vì có yêu cầu đặt lại mật khẩu.\n\nVui lòng nhấp vào link dưới đây để đặt lại mật khẩu của bạn:\n\n${resetUrl}\n\nLink này sẽ hết hạn sau 10 phút.\n\nNếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.`;
 
-    /* // Nếu có file sendEmail, hãy bỏ comment dòng dưới:
-    const message = `Bạn nhận được email này vì có yêu cầu đặt lại mật khẩu.\nLink đặt lại: ${resetUrl}`;
-    try {
-        await sendEmail({ email: user.email, subject: 'Password Reset Token', message });
-        res.status(200).json({ success: true, message: 'Email đã được gửi' });
-    } catch (err) {
+    // Kiểm tra xem email service có được cấu hình không
+    if (process.env.EMAIL_USER && process.env.EMAIL_USER !== 'your_email@gmail.com') {
+      try {
+        await sendEmail({
+          email: user.email,
+          subject: 'Đặt lại mật khẩu - Craftify Handmade',
+          message: message
+        });
+        
+        res.status(200).json({ 
+          success: true, 
+          message: 'Email đặt lại mật khẩu đã được gửi thành công' 
+        });
+      } catch (err) {
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
         await user.save();
-        return res.status(500).json({ message: 'Không thể gửi email' });
-    } 
-    */
-
-    res.status(200).json({ 
+        
+        console.error('Email send error:', err);
+        return res.status(500).json({ 
+          success: false,
+          message: 'Không thể gửi email. Vui lòng thử lại sau.' 
+        });
+      }
+    } else {
+      // Nếu email chưa được cấu hình, trả về token cho testing
+      console.log('=== PASSWORD RESET TOKEN (FOR TESTING) ===');
+      console.log(`Email: ${user.email}`);
+      console.log(`Reset Token: ${resetToken}`);
+      console.log(`Reset URL: ${resetUrl}`);
+      console.log('=========================================');
+      
+      res.status(200).json({ 
         success: true, 
-        message: 'Yêu cầu thành công. (Kiểm tra Console Log server để lấy link test nếu chưa cấu hình email)' 
-    });
+        message: 'Email chưa được cấu hình. Kiểm tra console server để lấy link reset.',
+        // Chỉ trả về token trong development mode
+        ...(process.env.NODE_ENV === 'development' && { resetToken, resetUrl })
+      });
+    }
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Forgot password error:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -253,6 +273,94 @@ const deleteUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// --- 10. THÊM ĐỊA CHỈ GIAO HÀNG ---
+const addAddress = async (req, res) => {
+  try {
+    const { fullName, phone, street, ward, district, city } = req.body;
+
+    if (!fullName || !phone || !street || !ward || !district || !city) {
+      return res.status(400).json({ message: 'Vui lòng điền đầy đủ thông tin địa chỉ' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+
+    user.addresses.push({
+      fullName,
+      phone,
+      street,
+      ward,
+      district,
+      city,
+    });
+
+    await user.save();
+    res.status(201).json({ success: true, message: 'Thêm địa chỉ thành công', data: user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// --- 11. CẬP NHẬT ĐỊA CHỈ GIAO HÀNG ---
+const updateAddress = async (req, res) => {
+  try {
+    const { fullName, phone, street, ward, district, city } = req.body;
+    const { addressId } = req.params;
+
+    if (!fullName || !phone || !street || !ward || !district || !city) {
+      return res.status(400).json({ message: 'Vui lòng điền đầy đủ thông tin địa chỉ' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+
+    const address = user.addresses.id(addressId);
+    if (!address) {
+      return res.status(404).json({ message: 'Không tìm thấy địa chỉ' });
+    }
+
+    address.fullName = fullName;
+    address.phone = phone;
+    address.street = street;
+    address.ward = ward;
+    address.district = district;
+    address.city = city;
+
+    await user.save();
+    res.status(200).json({ success: true, message: 'Cập nhật địa chỉ thành công', data: user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// --- 12. XOÁ ĐỊA CHỈ GIAO HÀNG ---
+const deleteAddress = async (req, res) => {
+  try {
+    const { addressId } = req.params;
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+
+    const address = user.addresses.id(addressId);
+    if (!address) {
+      return res.status(404).json({ message: 'Không tìm thấy địa chỉ' });
+    }
+
+    user.addresses.pull(addressId);
+    await user.save();
+    res.status(200).json({ success: true, message: 'Xoá địa chỉ thành công', data: user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -263,4 +371,7 @@ module.exports = {
   resetPassword,  
   getAllUsers, 
   deleteUser,
+  addAddress,
+  updateAddress,
+  deleteAddress,
 };

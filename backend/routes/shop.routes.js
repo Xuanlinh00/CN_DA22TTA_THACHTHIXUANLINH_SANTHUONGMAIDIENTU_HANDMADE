@@ -10,7 +10,8 @@ const {
   getMyShop, 
   getShopById, 
   updateShop, 
-  adminApproveShop 
+  adminApproveShop,
+  getMonthlyRevenue
 } = require('../controllers/shop.controller');
 
 // Import Middleware
@@ -53,6 +54,9 @@ router.put('/profile', protect, authorize('shop_owner', 'admin'), upload.fields(
   { name: 'avatar', maxCount: 1 },
   { name: 'coverImage', maxCount: 1 }
 ]), updateShop);
+
+// 2.5. Lấy doanh thu theo tháng (Shop Owner)
+router.get('/stats/monthly-revenue', protect, authorize('shop_owner', 'admin'), getMonthlyRevenue);
 
 // 3. Admin duyệt shop - CHỈ ADMIN (phải trước /:id)
 router.patch('/:id/status', protect, authorize('admin'), adminApproveShop);

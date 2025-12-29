@@ -36,8 +36,8 @@ export const adminService = {
     return response.data;
   },
 
-  getAllShops: async () => {
-    const response = await axios.get('/admin/shops');
+  getAllShops: async (params = {}) => {
+    const response = await axios.get('/admin/shops', { params });
     return response.data;
   },
 
@@ -46,8 +46,8 @@ export const adminService = {
     return response.data;
   },
 
-  approveShop: async (id) => {
-    const response = await axios.put(`/admin/shops/${id}/approve`);
+  approveShop: async (id, status) => {
+    const response = await axios.put(`/admin/shops/approve/${id}`, { status });
     return response.data;
   },
 
@@ -83,6 +83,16 @@ export const adminService = {
 
   deleteCategory: async (id) => {
     const response = await axios.delete(`/admin/categories/${id}`);
+    return response.data;
+  },
+
+  getMonthlyRevenue: async (year) => {
+    const response = await axios.get('/admin/stats/monthly-revenue', { params: { year } });
+    return response.data;
+  },
+
+  getCommission: async () => {
+    const response = await axios.get('/admin/stats/commission');
     return response.data;
   },
 };

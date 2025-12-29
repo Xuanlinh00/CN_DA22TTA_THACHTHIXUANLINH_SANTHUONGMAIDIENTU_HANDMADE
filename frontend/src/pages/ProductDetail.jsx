@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { FiShoppingCart, FiStar, FiMapPin, FiPackage, FiUser } from 'react-icons/fi';
+import { FiShoppingCart, FiStar, FiMapPin, FiPackage, FiMessageCircle } from 'react-icons/fi';
 import { productService } from '../services/productService';
 import useCartStore from '../stores/cartStore';
 import useAuthStore from '../stores/authStore';
@@ -133,23 +133,40 @@ const ProductDetail = () => {
           </div>
 
           {/* Shop Info */}
-          <Link
-            to={`/shops/${product.shop?._id}`}
-            className="flex items-center space-x-3 p-4 bg-primary-50 rounded-lg mb-6 hover:bg-primary-100 transition-colors"
-          >
-            <img
-              src={product.shop?.avatar || '/default-shop-avatar.jpg'}
-              alt={product.shop?.shopName}
-              className="w-12 h-12 rounded-full object-cover"
-            />
-            <div>
-              <p className="font-semibold text-primary-900">{product.shop?.shopName}</p>
-              <p className="text-sm text-primary-600 flex items-center">
-                <FiMapPin size={14} className="mr-1" />
-                {product.shop?.address?.city}
-              </p>
-            </div>
-          </Link>
+          <div className="p-4 bg-primary-50 rounded-lg mb-6">
+            <Link
+              to={`/shops/${product.shop?._id}`}
+              className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+            >
+              <img
+                src={product.shop?.avatar || '/default-shop-avatar.jpg'}
+                alt={product.shop?.shopName}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+              <div>
+                <p className="font-semibold text-primary-900">{product.shop?.shopName}</p>
+                <p className="text-sm text-primary-600 flex items-center">
+                  <FiMapPin size={14} className="mr-1" />
+                  {product.shop?.address?.city}
+                </p>
+              </div>
+            </Link>
+            
+            {/* Nút nhắn tin shop */}
+            {isAuthenticated && (
+              <button
+                onClick={() => {
+                  const url = `/messages?shop=${product.shop?._id}&product=${product._id}`;
+                  console.log('🔗 Chuyển hướng đến:', url);
+                  navigate(url);
+                }}
+                className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2 bg-primary-700 text-white rounded-lg hover:bg-primary-800 transition-colors"
+              >
+                <FiMessageCircle size={18} />
+                Nhắn tin shop
+              </button>
+            )}
+          </div>
 
           {/* Stock */}
           <div className="mb-6">

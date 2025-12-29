@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FiHome, FiPackage, FiShoppingBag, FiSettings, FiTrendingUp } from 'react-icons/fi';
+import { FiHome, FiPackage, FiShoppingBag, FiSettings, FiTrendingUp, FiMessageCircle } from 'react-icons/fi';
 
 const ShopLayout = ({ children }) => {
   const location = useLocation();
@@ -20,6 +20,11 @@ const ShopLayout = ({ children }) => {
       path: '/shop-dashboard/orders',
       icon: FiShoppingBag,
       label: 'Đơn hàng'
+    },
+    {
+      path: '/shop-dashboard/messages',
+      icon: FiMessageCircle,
+      label: 'Tin nhắn'
     },
     {
       path: '/shop-dashboard/settings',

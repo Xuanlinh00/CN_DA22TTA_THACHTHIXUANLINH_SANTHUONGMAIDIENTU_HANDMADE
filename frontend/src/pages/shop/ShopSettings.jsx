@@ -202,7 +202,7 @@ const ShopSettings = () => {
                             alt="Current avatar" 
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              e.target.src = 'https://via.placeholder.com/150';
+                              e.target.src = '/default-shop-avatar.jpg';
                             }}
                           />
                         ) : (
@@ -241,7 +241,7 @@ const ShopSettings = () => {
                             alt="Current cover" 
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              e.target.src = 'https://via.placeholder.com/800x200';
+                              e.target.src = '/default-shop-avatar.jpg';
                             }}
                           />
                         ) : (

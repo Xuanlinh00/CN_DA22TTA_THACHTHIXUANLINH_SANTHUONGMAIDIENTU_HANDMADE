@@ -11,7 +11,10 @@ const {
   forgotPassword,
   resetPassword,
   getAllUsers, // Admin
-  deleteUser   // Admin
+  deleteUser,  // Admin
+  addAddress,
+  updateAddress,
+  deleteAddress,
 } = require('../controllers/user.controller');
 
 // 2. Import Middleware
@@ -49,6 +52,21 @@ router.get('/profile', protect, getProfile);
 // @route   PUT /api/users/profile
 // @desc    Cập nhật thông tin cá nhân
 router.put('/profile', protect, updateProfile);
+
+
+// --- ADDRESS ROUTES (Cần đăng nhập) ---
+
+// @route   POST /api/users/addresses
+// @desc    Thêm địa chỉ giao hàng
+router.post('/addresses', protect, addAddress);
+
+// @route   PUT /api/users/addresses/:addressId
+// @desc    Cập nhật địa chỉ giao hàng
+router.put('/addresses/:addressId', protect, updateAddress);
+
+// @route   DELETE /api/users/addresses/:addressId
+// @desc    Xoá địa chỉ giao hàng
+router.delete('/addresses/:addressId', protect, deleteAddress);
 
 
 // --- ADMIN ROUTES (Cần quyền Admin) ---

@@ -35,4 +35,19 @@ export const authService = {
     const response = await axios.put(`/auth/reset-password/${token}`, { password });
     return response.data;
   },
+
+  addAddress: async (addressData) => {
+    const response = await axios.post('/auth/addresses', addressData);
+    return response.data.data || response.data;
+  },
+
+  updateAddress: async (addressId, addressData) => {
+    const response = await axios.put(`/auth/addresses/${addressId}`, addressData);
+    return response.data.data || response.data;
+  },
+
+  deleteAddress: async (addressId) => {
+    const response = await axios.delete(`/auth/addresses/${addressId}`);
+    return response.data.data || response.data;
+  },
 };

@@ -79,6 +79,7 @@ app.use('/api/categories', require('./routes/category.routes'));
 app.use('/api/admin', require('./routes/admin.routes'));
 app.use('/api/shipping', require('./routes/shipping.routes'));
 app.use('/api/payment', require('./routes/payment.routes'));
+app.use('/api/messages', require('./routes/message.routes'));
 
 // 11. Xử lý lỗi 404
 app.use((req, res, next) => {

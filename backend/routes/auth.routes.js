@@ -8,7 +8,10 @@ const {
   getProfile,
   updateProfile,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  addAddress,
+  updateAddress,
+  deleteAddress,
 } = require('../controllers/user.controller');
 
 router.post('/register', registerUser);
@@ -18,5 +21,10 @@ router.get('/profile', protect, getProfile);
 router.put('/profile', protect, updateProfile);
 router.post('/forgot-password', forgotPassword);
 router.put('/reset-password/:token', resetPassword);
+
+// Address routes
+router.post('/addresses', protect, addAddress);
+router.put('/addresses/:addressId', protect, updateAddress);
+router.delete('/addresses/:addressId', protect, deleteAddress);
 
 module.exports = router;

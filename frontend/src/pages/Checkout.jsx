@@ -6,17 +6,41 @@ import useCartStore from '../stores/cartStore';
 import useAuthStore from '../stores/authStore';
 import { orderService } from '../services/orderService';
 import { paymentService } from '../services/paymentService';
+import { authService } from '../services/authService';
 import { formatCurrency } from '../utils/formatters';
 import toast from 'react-hot-toast';
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { items: cartItems, getTotal: getCartTotal, clearCart } = useCartStore();
-  const { user } = useAuthStore();
+  const { items: cartItems, getTotal: getCartTotal, clearCart, removeFromCart } = useCartStore();
+  const { user: storeUser } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [shippingFee] = useState(30000); // Mock shipping fee
   const [items, setItems] = useState([]);
   const [isTempCart, setIsTempCart] = useState(false);
+  const [user, setUser] = useState(null);
+
+  // Load user từ store hoặc API
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        // Luôn fetch từ API để đảm bảo dữ liệu mới nhất
+        const response = await authService.getProfile();
+        if (response?.data) {
+          setUser(response.data);
+        } else if (storeUser) {
+          setUser(storeUser);
+        }
+      } catch (error) {
+        console.error('Lỗi load user profile:', error);
+        // Fallback to store user nếu API fail
+        if (storeUser) {
+          setUser(storeUser);
+        }
+      }
+    };
+    loadUser();
+  }, [storeUser]);
 
   // Kiểm tra xem có "Mua ngay" từ sessionStorage không
   useEffect(() => {
@@ -61,12 +85,13 @@ const Checkout = () => {
     register,
     handleSubmit,
     watch,
+    reset,
     formState: { errors },
   } = useForm({
     defaultValues: {
-      fullName: user?.name || '',
-      phone: user?.phone || '',
-      email: user?.email || '',
+      fullName: '',
+      phone: '',
+      email: '',
       street: '',
       ward: '',
       district: '',
@@ -76,9 +101,27 @@ const Checkout = () => {
     },
   });
 
+  // Cập nhật form khi user data thay đổi
+  useEffect(() => {
+    if (user) {
+      const defaultAddress = user.addresses?.[0] || {};
+      reset({
+        fullName: defaultAddress.fullName || user.name || '',
+        phone: defaultAddress.phone || user.phone || '',
+        email: user.email || '',
+        street: defaultAddress.street || '',
+        ward: defaultAddress.ward || '',
+        district: defaultAddress.district || '',
+        city: defaultAddress.city || '',
+        paymentMethod: 'COD',
+        shippingMethod: 'standard',
+      });
+    }
+  }, [user, reset]);
+
   // Watch form fields để kiểm tra địa chỉ đã điền đủ chưa
   const formData = watch();
-  const isAddressComplete = formData.fullName && formData.phone && formData.street && formData.ward && formData.district && formData.city;
+  const isAddressComplete = user && formData.fullName && formData.phone && formData.street && formData.ward && formData.district && formData.city;
   const calculatedShippingFee = isAddressComplete ? 30000 : 0;
 
   const onSubmit = async (data) => {
@@ -120,10 +163,13 @@ const Checkout = () => {
       const response = await orderService.create(orderData);
       const orderId = response.data._id;
       
-      // Xóa giỏ hàng
+      // Xóa sản phẩm đã đặt khỏi giỏ hàng
       if (isTemp) {
+        // Nếu là tempCart (Mua ngay), chỉ xoá những sản phẩm trong tempCart
         sessionStorage.removeItem('tempCart');
+        items.forEach(item => removeFromCart(item._id));
       } else {
+        // Nếu là từ giỏ hàng bình thường, xoá toàn bộ
         clearCart();
       }
 
@@ -175,92 +221,122 @@ const Checkout = () => {
                 Địa chỉ giao hàng
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-primary-700 mb-2">
-                    Họ và tên *
-                  </label>
-                  <input
-                    {...register('fullName', { required: 'Họ tên là bắt buộc' })}
-                    className="input-field"
-                  />
-                  {errors.fullName && (
-                    <p className="mt-1 text-sm text-red-600">{errors.fullName.message}</p>
-                  )}
-                </div>
+              {user ? (
+                <div className="space-y-4">
+                  {user.addresses && user.addresses.length > 0 ? (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-primary-700 mb-2">
+                            Họ và tên
+                          </label>
+                          <div className="p-3 bg-primary-50 rounded border border-primary-200 text-primary-900">
+                            {formData.fullName || 'Chưa cập nhật'}
+                          </div>
+                          <input
+                            {...register('fullName')}
+                            type="hidden"
+                          />
+                        </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-primary-700 mb-2">
-                    Số điện thoại *
-                  </label>
-                  <input
-                    {...register('phone', {
-                      required: 'Số điện thoại là bắt buộc',
-                      pattern: {
-                        value: /^[0-9]{10}$/,
-                        message: 'Số điện thoại không hợp lệ',
-                      },
-                    })}
-                    className="input-field"
-                  />
-                  {errors.phone && (
-                    <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
-                  )}
-                </div>
+                        <div>
+                          <label className="block text-sm font-medium text-primary-700 mb-2">
+                            Số điện thoại
+                          </label>
+                          <div className="p-3 bg-primary-50 rounded border border-primary-200 text-primary-900">
+                            {formData.phone || 'Chưa cập nhật'}
+                          </div>
+                          <input
+                            {...register('phone')}
+                            type="hidden"
+                          />
+                        </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-primary-700 mb-2">
-                    Địa chỉ cụ thể *
-                  </label>
-                  <input
-                    {...register('street', { required: 'Địa chỉ là bắt buộc' })}
-                    className="input-field"
-                    placeholder="Số nhà, tên đường"
-                  />
-                  {errors.street && (
-                    <p className="mt-1 text-sm text-red-600">{errors.street.message}</p>
-                  )}
-                </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-primary-700 mb-2">
+                            Địa chỉ cụ thể
+                          </label>
+                          <div className="p-3 bg-primary-50 rounded border border-primary-200 text-primary-900">
+                            {formData.street || 'Chưa cập nhật'}
+                          </div>
+                          <input
+                            {...register('street')}
+                            type="hidden"
+                          />
+                        </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-primary-700 mb-2">
-                    Phường/Xã *
-                  </label>
-                  <input
-                    {...register('ward', { required: 'Phường/Xã là bắt buộc' })}
-                    className="input-field"
-                  />
-                  {errors.ward && (
-                    <p className="mt-1 text-sm text-red-600">{errors.ward.message}</p>
-                  )}
-                </div>
+                        <div>
+                          <label className="block text-sm font-medium text-primary-700 mb-2">
+                            Phường/Xã
+                          </label>
+                          <div className="p-3 bg-primary-50 rounded border border-primary-200 text-primary-900">
+                            {formData.ward || 'Chưa cập nhật'}
+                          </div>
+                          <input
+                            {...register('ward')}
+                            type="hidden"
+                          />
+                        </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-primary-700 mb-2">
-                    Quận/Huyện *
-                  </label>
-                  <input
-                    {...register('district', { required: 'Quận/Huyện là bắt buộc' })}
-                    className="input-field"
-                  />
-                  {errors.district && (
-                    <p className="mt-1 text-sm text-red-600">{errors.district.message}</p>
-                  )}
-                </div>
+                        <div>
+                          <label className="block text-sm font-medium text-primary-700 mb-2">
+                            Quận/Huyện
+                          </label>
+                          <div className="p-3 bg-primary-50 rounded border border-primary-200 text-primary-900">
+                            {formData.district || 'Chưa cập nhật'}
+                          </div>
+                          <input
+                            {...register('district')}
+                            type="hidden"
+                          />
+                        </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-primary-700 mb-2">
-                    Tỉnh/Thành phố *
-                  </label>
-                  <input
-                    {...register('city', { required: 'Tỉnh/Thành phố là bắt buộc' })}
-                    className="input-field"
-                  />
-                  {errors.city && (
-                    <p className="mt-1 text-sm text-red-600">{errors.city.message}</p>
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-primary-700 mb-2">
+                            Tỉnh/Thành phố
+                          </label>
+                          <div className="p-3 bg-primary-50 rounded border border-primary-200 text-primary-900">
+                            {formData.city || 'Chưa cập nhật'}
+                          </div>
+                          <input
+                            {...register('city')}
+                            type="hidden"
+                          />
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/profile')}
+                        className="text-sm text-accent-600 hover:text-accent-700 font-medium"
+                      >
+                        Cập nhật thông tin
+                      </button>
+                    </>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-primary-600 mb-4">Bạn chưa có địa chỉ giao hàng</p>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/profile')}
+                        className="btn-primary"
+                      >
+                        Thêm địa chỉ
+                      </button>
+                    </div>
                   )}
                 </div>
-              </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-primary-600 mb-4">Vui lòng đăng nhập để tiếp tục</p>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/login')}
+                    className="btn-primary"
+                  >
+                    Đăng nhập
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Shipping Method */}

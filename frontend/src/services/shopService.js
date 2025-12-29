@@ -29,5 +29,10 @@ export const shopService = {
   approveShop: async (id, status) => {
     const response = await axios.patch(`/shops/${id}/status`, { status });
     return response.data;
+  },
+
+  getMonthlyRevenue: async () => {
+    const response = await axios.get('/shops/stats/monthly-revenue');
+    return response.data;
   }
 };

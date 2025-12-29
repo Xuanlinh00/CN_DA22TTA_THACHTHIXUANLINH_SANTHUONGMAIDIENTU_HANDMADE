@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FiMapPin, FiTruck, FiCreditCard, FiPackage, FiStar } from 'react-icons/fi';
+import { FiMapPin, FiTruck, FiCreditCard, FiPackage, FiStar, FiMessageCircle } from 'react-icons/fi';
 import { orderService } from '../services/orderService';
 import { paymentService } from '../services/paymentService';
 import { formatCurrency, formatDateTime, getOrderStatusLabel, getOrderStatusColor } from '../utils/formatters';
@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 
 const OrderDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
   const [reviewingItem, setReviewingItem] = useState(null);
@@ -177,6 +178,22 @@ const OrderDetail = () => {
               </p>
             </div>
           </div>
+
+          {/* Nút nhắn tin shop */}
+          {order.items && order.items.length > 0 && (
+            <button
+              onClick={() => {
+                const shopId = order.items[0].product?.shop?._id || order.items[0].shop?._id;
+                if (shopId) {
+                  navigate(`/messages?shop=${shopId}`);
+                }
+              }}
+              className="w-full mt-6 flex items-center justify-center gap-2 px-4 py-3 bg-primary-700 text-white rounded-lg hover:bg-primary-800 transition-colors"
+            >
+              <FiMessageCircle size={20} />
+              Nhắn tin shop
+            </button>
+          )}
         </div>
 
         {/* Summary */}

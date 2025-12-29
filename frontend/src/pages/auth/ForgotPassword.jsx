@@ -1,30 +1,31 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { FiMail, FiArrowLeft } from 'react-icons/fi';
-import { authService } from '../../services/authService';
 import toast from 'react-hot-toast';
+import axios from '../../utils/axios';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    watch,
-  } = useForm();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!email) {
+      toast.error('Vui lòng nhập email');
+      return;
+    }
 
-  const email = watch('email');
-
-  const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      await authService.forgotPassword(data.email);
-      setSubmitted(true);
-      toast.success('Kiểm tra email của bạn để đặt lại mật khẩu');
+      const response = await axios.post('/auth/forgot-password', { email });
+      
+      if (response.data.success) {
+        setSubmitted(true);
+        toast.success('Email xác nhận đã được gửi!');
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
     } finally {
@@ -32,110 +33,109 @@ const ForgotPassword = () => {
     }
   };
 
-  if (submitted) {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4">
-        <div className="max-w-md w-full">
-          <div className="card p-8 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <FiMail className="text-green-600" size={32} />
-            </div>
-            
-            <h1 className="text-2xl font-sans font-bold text-primary-900 mb-4">
-              Email Đã Được Gửi
-            </h1>
-            
-            <p className="text-primary-600 mb-6">
-              Chúng tôi đã gửi hướng dẫn đặt lại mật khẩu đến:
-            </p>
-            
-            <p className="text-lg font-semibold text-primary-900 mb-8 break-all">
-              {email}
-            </p>
-            
-            <p className="text-sm text-primary-600 mb-8">
-              Vui lòng kiểm tra email của bạn (bao gồm thư mục Spam) và nhấp vào liên kết để đặt lại mật khẩu.
-            </p>
-            
-            <div className="space-y-3">
-              <button
-                onClick={() => navigate('/login')}
-                className="w-full btn-primary"
-              >
-                Quay Lại Đăng Nhập
-              </button>
-              
-              <button
-                onClick={() => setSubmitted(false)}
-                className="w-full btn-outline"
-              >
-                Gửi Lại Email
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-sans font-bold text-primary-900 mb-2">
-            Quên Mật Khẩu?
-          </h1>
-          <p className="text-primary-600">
-            Nhập email của bạn để nhận hướng dẫn đặt lại mật khẩu
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-accent-50 flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate('/login')}
+          className="flex items-center gap-2 text-primary-600 hover:text-primary-900 mb-8 transition-colors"
+        >
+          <FiArrowLeft size={20} />
+          <span>Quay lại đăng nhập</span>
+        </button>
 
         <div className="card p-8">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-primary-700 mb-2">
-                Email
-              </label>
-              <div className="relative">
-                <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-400" />
-                <input
-                  type="email"
-                  {...register('email', {
-                    required: 'Email là bắt buộc',
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Email không hợp lệ',
-                    },
-                  })}
-                  className="input-field pl-10"
-                  placeholder="your@email.com"
-                />
+          {!submitted ? (
+            <>
+              {/* Header */}
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-accent-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FiMail size={32} className="text-accent-600" />
+                </div>
+                <h1 className="text-3xl font-bold text-primary-900 mb-2">
+                  Quên mật khẩu?
+                </h1>
+                <p className="text-primary-600">
+                  Nhập email của bạn để nhận link đặt lại mật khẩu
+                </p>
               </div>
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-              )}
-            </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full btn-primary"
-            >
-              {isLoading ? 'Đang gửi...' : 'Gửi Hướng Dẫn'}
-            </button>
-          </form>
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-primary-900 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Nhập email của bạn"
+                    className="w-full px-4 py-3 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+                  />
+                </div>
 
-          <div className="mt-6 text-center">
-            <Link
-              to="/login"
-              className="inline-flex items-center text-primary-700 hover:text-primary-900 font-semibold"
-            >
-              <FiArrowLeft className="mr-2" />
-              Quay Lại Đăng Nhập
-            </Link>
-          </div>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? 'Đang gửi...' : 'Gửi link xác nhận'}
+                </button>
+              </form>
+
+              {/* Info */}
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  💡 Kiểm tra email của bạn (bao gồm thư mục spam) để nhận link đặt lại mật khẩu. Link sẽ hết hạn sau 10 phút.
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Success Message */}
+              <div className="text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-primary-900 mb-2">
+                  Email đã được gửi!
+                </h2>
+                <p className="text-primary-600 mb-6">
+                  Vui lòng kiểm tra email <span className="font-semibold">{email}</span> để nhận link đặt lại mật khẩu.
+                </p>
+
+                <div className="space-y-3 mb-6">
+                  <p className="text-sm text-primary-600">
+                    ⏱️ Link sẽ hết hạn sau <span className="font-semibold">10 phút</span>
+                  </p>
+                  <p className="text-sm text-primary-600">
+                    📧 Không tìm thấy email? Kiểm tra thư mục <span className="font-semibold">Spam</span>
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => navigate('/login')}
+                  className="w-full btn-primary"
+                >
+                  Quay lại đăng nhập
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSubmitted(false);
+                    setEmail('');
+                  }}
+                  className="w-full btn-outline mt-3"
+                >
+                  Gửi lại email
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
