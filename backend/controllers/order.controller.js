@@ -32,6 +32,22 @@ const createOrder = async (req, res) => {
       productMap[p._id.toString()] = p;
     });
 
+    // --- KIỂM TRA: Chủ shop không thể mua sản phẩm của chính mình ---
+    if (req.user.role === 'shop_owner') {
+      const userShop = await Shop.findOne({ user: req.user._id });
+      if (userShop) {
+        for (const item of items) {
+          const product = productMap[item.product];
+          if (product && product.shop._id.toString() === userShop._id.toString()) {
+            return res.status(400).json({ 
+              success: false, 
+              message: `Bạn không thể mua sản phẩm của chính shop mình (${product.name})` 
+            });
+          }
+        }
+      }
+    }
+
     // --- BƯỚC 1: KIỂM TRA TỒN KHO & TẠO ORDER ITEMS ---
     const orderItems = [];
     let subtotal = 0;
@@ -201,12 +217,27 @@ const getShopOrders = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Bạn chưa có gian hàng' });
     }
 
+    // Lấy tất cả đơn hàng có items của shop này
     const orders = await Order.find({ 'items.shop': shop._id })
       .populate('user', 'name email phone')
       .populate('items.product', 'name price')
+      .populate('items.shop')  // Populate toàn bộ shop object
       .sort({ createdAt: -1 });
 
-    res.status(200).json({ success: true, count: orders.length, data: orders });
+    // Lọc items để chỉ giữ lại items của shop hiện tại
+    const shopOrders = orders.map(order => {
+      const shopItems = order.items.filter(item => {
+        if (!item.shop) return false;
+        const itemShopId = item.shop?._id ? item.shop._id.toString() : item.shop?.toString();
+        return itemShopId === shop._id.toString();
+      });
+      return {
+        ...order.toObject(),
+        items: shopItems
+      };
+    });
+
+    res.status(200).json({ success: true, count: shopOrders.length, data: shopOrders });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -265,9 +296,19 @@ const updateOrderStatus = async (req, res) => {
       }
 
       // Kiểm tra xem đơn hàng này có món nào thuộc shop này không
-      const isOwner = order.items.some(item => item.shop.toString() === shop._id.toString());
-      if (!isOwner) {
+      const hasShopItems = order.items.some(item => item.shop.toString() === shop._id.toString());
+      if (!hasShopItems) {
         return res.status(403).json({ success: false, message: 'Đơn hàng này không thuộc quản lý của bạn' });
+      }
+
+      // Kiểm tra xem tất cả items của đơn hàng có phải của shop này không
+      // Nếu không, shop_owner không được cập nhật trạng thái toàn bộ đơn hàng
+      const allItemsFromThisShop = order.items.every(item => item.shop.toString() === shop._id.toString());
+      if (!allItemsFromThisShop) {
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Bạn chỉ có thể cập nhật trạng thái cho đơn hàng có tất cả items từ shop của bạn. Đơn hàng này có items từ shop khác.' 
+        });
       }
     }
 
@@ -339,31 +380,38 @@ const getOrderById = async (req, res) => {
     const order = await Order.findById(req.params.id)
       .populate('user', 'name email phone')
       .populate('items.product', 'name price images')
-      .populate('items.shop', 'shopName');
+      .populate('items.shop');
 
     if (!order) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
     }
 
-    // Kiểm tra quyền xem đơn hàng
-    // Admin: xem tất cả
-    // Shop owner: chỉ xem đơn có sản phẩm của shop mình
-    // User: chỉ xem đơn của mình
-    if (req.user.role === 'admin') {
-      // Admin xem được tất cả
-      return res.status(200).json({ success: true, data: order });
-    } else if (req.user.role === 'shop_owner') {
-      // Shop owner kiểm tra xem đơn có sản phẩm của shop không
+    // Nếu là shop owner, lọc items để chỉ giữ lại items của shop
+    if (req.user.role === 'shop_owner') {
       const shop = await Shop.findOne({ user: req.user._id });
       if (shop) {
-        const hasShopProduct = order.items.some(
-          item => item.shop._id.toString() === shop._id.toString()
-        );
-        if (hasShopProduct) {
-          return res.status(200).json({ success: true, data: order });
+        // Lọc items
+        const filteredItems = order.items.filter(item => {
+          if (!item.shop) return false;
+          const itemShopId = item.shop?._id ? item.shop._id.toString() : item.shop?.toString();
+          return itemShopId === shop._id.toString();
+        });
+        
+        // Nếu không có items của shop, trả về error
+        if (filteredItems.length === 0) {
+          return res.status(403).json({ success: false, message: 'Đơn hàng này không có sản phẩm của shop bạn' });
         }
+        
+        // Trả về order với items đã lọc
+        order.items = filteredItems;
       }
-      return res.status(403).json({ success: false, message: 'Bạn không có quyền xem đơn hàng này' });
+    }
+
+    // Kiểm tra quyền xem đơn hàng
+    if (req.user.role === 'admin') {
+      return res.status(200).json({ success: true, data: order });
+    } else if (req.user.role === 'shop_owner') {
+      return res.status(200).json({ success: true, data: order });
     } else {
       // User chỉ xem đơn của mình
       if (order.user._id.toString() === req.user._id.toString()) {

@@ -3,7 +3,7 @@ const axios = require('axios');
 // Cấu hình API giao hàng (GHN - Giao Hàng Nhanh)
 const ghnConfig = {
   apiUrl: process.env.GHN_API_URL || 'https://dev-online-gateway.ghn.vn/shiip/public-api',
-  token: process.env.GHN_TOKEN,
+  token: process.env.GHN_API_TOKEN,
   shopId: process.env.GHN_SHOP_ID
 };
 
@@ -127,6 +127,20 @@ const calculateShippingFee = async (req, res) => {
       service_type_id = 2 // 1: Express, 2: Standard
     } = req.body;
 
+    console.log('🚀 [SHIPPING] Tính phí vận chuyển');
+    console.log('📍 Dữ liệu:', {
+      from_district_id,
+      to_district_id,
+      weight,
+      service_type_id
+    });
+
+    // Kiểm tra token trước
+    if (!ghnConfig.token || ghnConfig.token === 'your_ghn_token_here') {
+      console.warn('⚠️  Token GHN không được cấu hình, sử dụng phí tính toán');
+      throw new Error('Token GHN không hợp lệ');
+    }
+
     const requestData = {
       from_district_id: parseInt(from_district_id),
       from_ward_code: from_ward_code.toString(),
@@ -139,7 +153,13 @@ const calculateShippingFee = async (req, res) => {
       service_type_id: parseInt(service_type_id)
     };
 
+    console.log('📤 Gửi request tới GHN:', JSON.stringify(requestData, null, 2));
+    console.log('🔑 Token:', ghnConfig.token ? '✓ Có' : '✗ Không');
+    console.log('🏪 Shop ID:', ghnConfig.shopId ? '✓ Có' : '✗ Không');
+
     const response = await ghnAPI.post('/v2/shipping-order/fee', requestData);
+    
+    console.log('✅ Phản hồi GHN:', JSON.stringify(response.data, null, 2));
     
     const feeData = response.data.data;
     
@@ -156,21 +176,34 @@ const calculateShippingFee = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Lỗi tính phí vận chuyển:', error);
+    console.error('❌ Lỗi tính phí vận chuyển:');
+    console.error('Status:', error.response?.status);
+    console.error('Data:', error.response?.data);
+    console.error('Message:', error.message);
     
-    // Fallback tính phí cơ bản
-    const { weight = 500, service_type_id = 2 } = req.body;
-    let baseFee = 25000; // Phí cơ bản 25k
+    // Tính phí dựa trên logic đơn giản
+    const { weight = 500, service_type_id = 2, to_district_id } = req.body;
     
-    // Tính theo trọng lượng
+    // Phí cơ bản theo khoảng cách
+    let baseFee = 25000; // Phí cơ bản 25k (cùng quận)
+    
+    // Nếu khác quận, tăng phí
+    if (to_district_id && to_district_id !== 1442) {
+      baseFee = 30000; // Khác quận: 30k
+    }
+    
+    // Tính theo trọng lượng (thêm 5k cho mỗi 500g)
     if (weight > 500) {
-      baseFee += Math.ceil((weight - 500) / 500) * 5000;
+      const extraWeight = Math.ceil((weight - 500) / 500);
+      baseFee += extraWeight * 5000;
     }
     
     // Phí express cao hơn 50%
     if (service_type_id === 1) {
       baseFee = Math.round(baseFee * 1.5);
     }
+    
+    console.log('⚠️  Sử dụng phí tính toán:', baseFee);
     
     res.json({
       success: true,
@@ -183,7 +216,8 @@ const calculateShippingFee = async (req, res) => {
         total: baseFee,
         service_type_id: service_type_id
       },
-      fallback: true
+      fallback: true,
+      message: 'Phí được tính toán dựa trên khoảng cách và trọng lượng'
     });
   }
 };

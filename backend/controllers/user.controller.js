@@ -3,7 +3,14 @@ const User = require('../models/user.model');
 const generateToken = require('../utils/generateToken');
 const sendEmail = require('../utils/sendEmail'); // Gửi email
 
-// 1. Đăng ký
+// ========== QUẢN LÝ XÁC THỰC NGƯỜI DÙNG ==========
+
+/**
+ * 1. ĐĂNG KÝ NGƯỜI DÙNG MỚI
+ * - Kiểm tra email đã tồn tại
+ * - Tự động gán role admin nếu email trùng ADMIN_EMAIL
+ * - Mã hóa mật khẩu trước khi lưu
+ */
 const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -45,7 +52,9 @@ const registerUser = async (req, res) => {
   }
 };
 
-// 2. Đăng nhập
+// 2. ĐĂNG NHẬP
+// - Kiểm tra email và mật khẩu
+// - Tạo JWT token
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -73,7 +82,8 @@ const loginUser = async (req, res) => {
   }
 };
 
-// 3. Đăng xuất
+// 3. ĐĂNG XUẤT
+// - Xóa JWT token từ cookie
 const logoutUser = async (req, res) => {
   try {
     res.cookie('jwt', '', {
@@ -86,7 +96,8 @@ const logoutUser = async (req, res) => {
   }
 };
 
-// 4. Lấy profile
+// 4. LẤY THÔNG TIN CÁ NHÂN
+// - Lấy thông tin user từ token
 const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password');
@@ -99,7 +110,9 @@ const getProfile = async (req, res) => {
   }
 };
 
-// 5. Cập nhật profile
+// 5. CẬP NHẬT THÔNG TIN CÁ NHÂN
+// - Cập nhật tên, email, mật khẩu
+// - Kiểm tra email không trùng với user khác
 const updateProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
@@ -130,10 +143,12 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// --- CÁC HÀM MỚI BỔ SUNG ---
+// ========== QUẢN LÝ MẬT KHẨU ==========
 
-// 6. Quên mật khẩu (Gửi email token)
-// @route POST /api/auth/forgot-password
+// 6. QUÊN MẬT KHẨU
+// - Tạo token reset password
+// - Gửi email với link reset (hoặc hiển thị token nếu email chưa cấu hình)
+// - Token hết hạn sau 10 phút
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -209,8 +224,10 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// 7. Đặt lại mật khẩu mới
-// @route PUT /api/users/reset-password/:token
+// 7. ĐẶT LẠI MẬT KHẨU
+// - Xác minh token reset password
+// - Kiểm tra token chưa hết hạn
+// - Cập nhật mật khẩu mới
 const resetPassword = async (req, res) => {
   try {
     // Hash token từ URL để so sánh với token trong DB
@@ -243,7 +260,11 @@ const resetPassword = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-// --- 8. [ADMIN] LẤY TẤT CẢ USER ---
+// ========== QUẢN LÝ NGƯỜI DÙNG (ADMIN) ==========
+
+// 8. LẤY TẤT CẢ NGƯỜI DÙNG (ADMIN)
+// - Lấy danh sách tất cả user
+// - Không trả về mật khẩu
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find({}).select('-password').sort({ createdAt: -1 });
@@ -253,7 +274,8 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// --- 9. [ADMIN] XOÁ USER ---
+// 9. XÓA NGƯỜI DÙNG (ADMIN)
+// - Không cho phép xóa tài khoản Admin
 const deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -274,7 +296,10 @@ const deleteUser = async (req, res) => {
   }
 };
 
-// --- 10. THÊM ĐỊA CHỈ GIAO HÀNG ---
+// ========== QUẢN LÝ ĐỊA CHỈ GIAO HÀNG ==========
+
+// 10. THÊM ĐỊA CHỈ GIAO HÀNG MỚI
+// - Thêm địa chỉ vào mảng addresses của user
 const addAddress = async (req, res) => {
   try {
     const { fullName, phone, street, ward, district, city } = req.body;
@@ -304,7 +329,8 @@ const addAddress = async (req, res) => {
   }
 };
 
-// --- 11. CẬP NHẬT ĐỊA CHỈ GIAO HÀNG ---
+// 11. CẬP NHẬT ĐỊA CHỈ GIAO HÀNG
+// - Cập nhật thông tin địa chỉ theo ID
 const updateAddress = async (req, res) => {
   try {
     const { fullName, phone, street, ward, district, city } = req.body;
@@ -338,7 +364,8 @@ const updateAddress = async (req, res) => {
   }
 };
 
-// --- 12. XOÁ ĐỊA CHỈ GIAO HÀNG ---
+// 12. XÓA ĐỊA CHỈ GIAO HÀNG
+// - Xóa địa chỉ khỏi mảng addresses
 const deleteAddress = async (req, res) => {
   try {
     const { addressId } = req.params;

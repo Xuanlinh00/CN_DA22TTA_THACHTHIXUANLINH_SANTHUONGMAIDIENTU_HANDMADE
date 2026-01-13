@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useQuery } from '@tanstack/react-query';
 import { FiUser, FiMail, FiLock, FiSave, FiMapPin, FiTrash2, FiEdit2, FiPlus } from 'react-icons/fi';
+import { MdStorefront } from 'react-icons/md';
 import { authService } from '../services/authService';
+import { shopService } from '../services/shopService';
 import useAuthStore from '../stores/authStore';
 import FloatingChat from '../components/common/FloatingChat';
 import toast from 'react-hot-toast';
@@ -12,6 +15,15 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('info');
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState(null);
+
+  // Lấy thông tin shop nếu user là shop_owner
+  const { data: shopData } = useQuery({
+    queryKey: ['my-shop'],
+    queryFn: shopService.getMyShop,
+    enabled: user?.role === 'shop_owner',
+  });
+
+  const shop = shopData?.data;
 
   const {
     register: registerInfo,
@@ -179,6 +191,18 @@ const Profile = () => {
               >
                 Thông tin cá nhân
               </button>
+              {user?.role === 'shop_owner' && (
+                <button
+                  onClick={() => setActiveTab('shop')}
+                  className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
+                    activeTab === 'shop'
+                      ? 'bg-primary-700 text-white'
+                      : 'text-primary-700 hover:bg-primary-100'
+                  }`}
+                >
+                  Thông tin shop
+                </button>
+              )}
               <button
                 onClick={() => setActiveTab('addresses')}
                 className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
@@ -259,6 +283,63 @@ const Profile = () => {
                   <span>{isLoading ? 'Đang lưu...' : 'Lưu thay đổi'}</span>
                 </button>
               </form>
+            </div>
+          )}
+
+          {activeTab === 'shop' && user?.role === 'shop_owner' && (
+            <div className="card p-6">
+              <h2 className="text-xl font-semibold text-primary-900 mb-6 flex items-center">
+                <MdStorefront className="mr-2" />
+                Thông tin shop
+              </h2>
+
+              {shop ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="p-4 bg-primary-50 rounded-lg border border-primary-200">
+                      <p className="text-sm text-primary-600 mb-1">Tên shop</p>
+                      <p className="text-lg font-semibold text-primary-900">{shop.shopName}</p>
+                    </div>
+                    <div className="p-4 bg-primary-50 rounded-lg border border-primary-200">
+                      <p className="text-sm text-primary-600 mb-1">Trạng thái</p>
+                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                        shop.status === 'active' ? 'bg-green-100 text-green-800' :
+                        shop.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {shop.status === 'active' ? '✅ Hoạt động' : 
+                         shop.status === 'pending' ? '⏳ Chờ duyệt' : 
+                         '❌ Bị từ chối'}
+                      </span>
+                    </div>
+                    <div className="p-4 bg-primary-50 rounded-lg border border-primary-200">
+                      <p className="text-sm text-primary-600 mb-1">Số điện thoại</p>
+                      <p className="text-lg font-semibold text-primary-900">{shop.phone || 'Chưa cập nhật'}</p>
+                    </div>
+                    <div className="p-4 bg-primary-50 rounded-lg border border-primary-200">
+                      <p className="text-sm text-primary-600 mb-1">Ngày tạo</p>
+                      <p className="text-lg font-semibold text-primary-900">
+                        {new Date(shop.createdAt).toLocaleDateString('vi-VN')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-primary-50 rounded-lg border border-primary-200">
+                    <p className="text-sm text-primary-600 mb-2">Mô tả shop</p>
+                    <p className="text-primary-900">{shop.description || 'Chưa có mô tả'}</p>
+                  </div>
+
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-900">
+                      <strong>ℹ️ Lưu ý:</strong> Để cập nhật thông tin shop, vui lòng truy cập phần cài đặt shop trong bảng điều khiển.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-primary-600 mb-4">Đang tải thông tin shop...</p>
+                </div>
+              )}
             </div>
           )}
 

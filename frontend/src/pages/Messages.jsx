@@ -4,7 +4,8 @@ import { useSearchParams } from 'react-router-dom';
 import { FiSend, FiX, FiSearch, FiMessageCircle } from 'react-icons/fi';
 import { messageService } from '../services/messageService';
 import { shopService } from '../services/shopService';
-import { formatDateTime } from '../utils/formatters';
+import { productService } from '../services/productService';
+import { formatDateTime, formatCurrency } from '../utils/formatters';
 import Loading from '../components/common/Loading';
 import useAuthStore from '../stores/authStore';
 import toast from 'react-hot-toast';
@@ -23,6 +24,7 @@ const Messages = () => {
   const [messageContent, setMessageContent] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentProduct, setCurrentProduct] = useState(null);
+  const [attachedProduct, setAttachedProduct] = useState(null);
   const messagesEndRef = useRef(null);
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuthStore();
@@ -31,6 +33,21 @@ const Messages = () => {
   const productId = searchParams.get('product');
   
   console.log('📍 URL params:', { shop: searchParams.get('shop'), product: productId });
+
+  // Lấy thông tin sản phẩm nếu có productId
+  const { data: productData } = useQuery({
+    queryKey: ['product-detail', productId],
+    queryFn: () => productService.getById(productId),
+    enabled: !!productId,
+  });
+
+  // Tự động đính kèm sản phẩm khi có productId
+  useEffect(() => {
+    if (productData?.data) {
+      setAttachedProduct(productData.data);
+      console.log('📦 Sản phẩm được đính kèm:', productData.data.name);
+    }
+  }, [productData?.data]);
 
   // Lấy danh sách cuộc trò chuyện
   const { data: conversationsData, isLoading: conversationsLoading } = useQuery({
@@ -112,8 +129,8 @@ const Messages = () => {
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (!messageContent.trim()) {
-      toast.error('Vui lòng nhập nội dung tin nhắn');
+    if (!messageContent.trim() && !attachedProduct) {
+      toast.error('Vui lòng nhập nội dung tin nhắn hoặc đính kèm sản phẩm');
       return;
     }
 
@@ -123,17 +140,15 @@ const Messages = () => {
       return;
     }
 
-    // Sử dụng productId từ URL params hoặc từ selectedConversation
-    const finalProductId = productId || selectedConversation?.productId;
-    console.log('📤 Gửi tin nhắn với productId:', finalProductId);
     const payload = {
       recipientId,
-      content: messageContent
+      content: messageContent || (attachedProduct ? `Xin hỏi về sản phẩm: ${attachedProduct.name}` : '')
     };
     
-    // Chỉ gửi productId nếu có
-    if (finalProductId) {
-      payload.productId = finalProductId;
+    // Gửi productId nếu có sản phẩm đính kèm
+    if (attachedProduct) {
+      payload.productId = attachedProduct._id;
+      console.log('📤 Gửi tin nhắn với sản phẩm:', attachedProduct.name);
     }
     
     sendMutation.mutate(payload);
@@ -148,12 +163,12 @@ const Messages = () => {
   if (conversationsLoading || (shopId && shopLoading)) return <Loading fullScreen />;
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 flex flex-col min-h-screen">
       <h1 className="text-3xl font-sans font-bold text-primary-900 mb-8">
         Tin nhắn
       </h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
         {/* Danh sách cuộc trò chuyện */}
         <div className="card p-4 flex flex-col">
           <div className="mb-4">
@@ -212,7 +227,7 @@ const Messages = () => {
 
         {/* Khu vực chat */}
         {selectedConversation ? (
-          <div className="lg:col-span-2 card p-4 flex flex-col">
+          <div className="lg:col-span-2 card p-4 flex flex-col min-h-0">
             {/* Header */}
             <div className="flex items-center justify-between pb-4 border-b border-primary-200">
               <div className="flex-1">
@@ -252,7 +267,7 @@ const Messages = () => {
             </div>
 
             {/* Tin nhắn */}
-            <div className="flex-1 overflow-y-auto py-4 space-y-4">
+            <div className="flex-1 overflow-y-auto py-4 space-y-4 min-h-0">
               {messagesLoading ? (
                 <div className="flex items-center justify-center h-full">
                   <Loading />
@@ -332,7 +347,38 @@ const Messages = () => {
             </div>
 
             {/* Input - Luôn hiển thị */}
-            <form onSubmit={handleSendMessage} className="pt-4 border-t border-primary-200">
+            <form onSubmit={handleSendMessage} className="pt-3 border-t border-primary-200 flex-shrink-0">
+              {/* Hiển thị sản phẩm đính kèm */}
+              {attachedProduct && (
+                <div className="mb-3 p-2 bg-accent-50 border border-accent-200 rounded flex items-center gap-2">
+                  {attachedProduct.images?.[0] && (
+                    <img
+                      src={getImageUrl(attachedProduct.images[0])}
+                      alt={attachedProduct.name}
+                      className="w-8 h-8 object-cover rounded"
+                      onError={(e) => {
+                        e.target.src = '/default-product.jpg';
+                      }}
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-accent-900 truncate">
+                      {attachedProduct.name}
+                    </p>
+                    <p className="text-xs text-accent-700">
+                      {formatCurrency(attachedProduct.price)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAttachedProduct(null)}
+                    className="text-accent-600 hover:text-accent-900"
+                  >
+                    <FiX size={16} />
+                  </button>
+                </div>
+              )}
+              
               <div className="flex gap-2">
                 <input
                   type="text"

@@ -136,7 +136,7 @@ const Home = () => {
             <div className="lg:col-span-9">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-3xl font-sans font-bold text-primary-900">
-                  Sản phẩm được tìm kiếm và mua nhiều
+                  Sản phẩm nổi bật
                 </h2>
                 <Link to="/products" className="text-primary-700 hover:text-primary-900 font-medium flex items-center">
                   Xem tất cả
@@ -147,7 +147,7 @@ const Home = () => {
               {productsLoading ? (
                 <Loading />
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {productsData?.data?.map((product) => (
                     <ProductCard key={product._id} product={product} />
                   ))}

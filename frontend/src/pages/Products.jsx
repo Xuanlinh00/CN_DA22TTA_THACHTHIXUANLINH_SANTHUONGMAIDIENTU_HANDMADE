@@ -162,7 +162,7 @@ const Products = () => {
               <div className="mb-4 text-primary-600">
                 Tìm thấy {productsData.pagination?.total || 0} sản phẩm
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {productsData.data.map((product) => (
                   <ProductCard key={product._id} product={product} />
                 ))}

@@ -29,8 +29,10 @@ import ShopDetail from './pages/ShopDetail';
 import ShopDashboard from './pages/shop/ShopDashboard';
 import ShopProducts from './pages/shop/ShopProducts';
 import ShopOrders from './pages/shop/ShopOrders';
+import ShopOrderDetail from './pages/shop/ShopOrderDetail';
 import ShopMessages from './pages/shop/ShopMessages';
 import ShopSettings from './pages/shop/ShopSettings';
+import ShopCommissions from './pages/shop/ShopCommissions';
 import CreateShop from './pages/shop/CreateShop';
 
 // Admin Pages
@@ -151,6 +153,14 @@ function App() {
             }
           />
           <Route
+            path="/shop-dashboard/orders/:id"
+            element={
+              <ProtectedRoute allowedRoles={['shop_owner']}>
+                <ShopOrderDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/shop-dashboard/messages"
             element={
               <ProtectedRoute allowedRoles={['shop_owner']}>
@@ -163,6 +173,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['shop_owner']}>
                 <ShopSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/shop-dashboard/commissions"
+            element={
+              <ProtectedRoute allowedRoles={['shop_owner']}>
+                <ShopCommissions />
               </ProtectedRoute>
             }
           />

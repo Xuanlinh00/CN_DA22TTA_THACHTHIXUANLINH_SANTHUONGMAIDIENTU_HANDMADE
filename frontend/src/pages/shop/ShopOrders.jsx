@@ -117,7 +117,7 @@ const ShopOrders = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <Link
-                        to={`/orders/${order._id}`}
+                        to={`/shop-dashboard/orders/${order._id}`}
                         className="text-primary-700 hover:text-primary-900 font-medium"
                       >
                         Chi tiết

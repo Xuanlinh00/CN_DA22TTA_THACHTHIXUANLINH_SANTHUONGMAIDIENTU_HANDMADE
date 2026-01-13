@@ -50,11 +50,12 @@ const HeroBanner = ({ slides = [] }) => {
             <div className="relative h-full flex items-center">
               <div className="container mx-auto px-4 md:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center h-full">
-                  {/* Left side - Text content */}
+                  {/* Left side - Text content     /*whitespace-nowrap*/}
                   <div className="flex flex-col justify-center py-12 md:py-0 z-10">
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-sans font-extrabold mb-6 leading-relaxed text-gray-900" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.3)'}}>
+                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-sans font-extrabold mb-6 leading-relaxed text-gray-900 " style={{textShadow: '2px 2px 4px rgba(0,0,0,0.3)'}}>
                       {slide.title}
-                    </h1>
+                    </h2>
+                
                     <p className="text-lg md:text-xl text-gray-800 mb-8 leading-relaxed max-w-lg font-normal" style={{textShadow: '1px 1px 2px rgba(0,0,0,0.2)'}}>
                       {slide.description}
                     </p>

@@ -97,7 +97,7 @@ const Navbar = () => {
                     className="flex items-center space-x-1 text-white hover:text-amber-100 transition-colors"
                   >
                     <MdDashboard size={20} />
-                    <span>Quản trị viên</span>
+                    <span>Bảng điều khiển</span>
                   </Link>
                 )}
 

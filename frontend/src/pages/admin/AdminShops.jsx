@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FiCheck, FiX, FiTrash2, FiEye, FiX as FiClose } from 'react-icons/fi';
+// ✅ Sửa: Xóa duplicate import FiX (FiX as FiClose)
+import { FiCheck, FiX, FiTrash2, FiEye } from 'react-icons/fi';
 import { useState } from 'react';
 import { adminService } from '../../services/adminService';
 import { formatDateTime, getShopStatusLabel } from '../../utils/formatters';
@@ -185,7 +186,7 @@ const AdminShops = () => {
                 onClick={() => setSelectedShop(null)}
                 className="text-primary-400 hover:text-primary-600"
               >
-                <FiClose size={24} />
+                <FiX size={24} />
               </button>
             </div>
 

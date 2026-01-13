@@ -8,6 +8,7 @@ import FloatingChat from '../../components/common/FloatingChat';
 import RevenueChart from '../../components/admin/RevenueChart';
 import CommissionChart from '../../components/admin/CommissionChart';
 import TopSellingProducts from '../../components/admin/TopSellingProducts';
+import YearlyRevenueChart from '../../components/admin/YearlyRevenueChart';
 import toast from 'react-hot-toast';
 
 const AdminDashboard = () => {
@@ -81,40 +82,40 @@ const AdminDashboard = () => {
       <h2 className="text-xl font-semibold text-primary-900 mb-4">
         Quản lý nhanh
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Link to="/admin/users" className="card p-6 hover:shadow-lg transition-shadow">
-          <FiUsers className="text-primary-700 mb-3" size={32} />
-          <h3 className="text-xl font-semibold text-primary-900 mb-2">Quản lý người dùng</h3>
-          <p className="text-primary-600">Xem và quản lý tất cả người dùng</p>
+      <div className="flex flex-wrap gap-4 mb-8">
+        <Link to="/admin/users" className="card p-4 hover:shadow-lg transition-shadow flex-1 min-w-[200px]">
+          <FiUsers className="text-primary-700 mb-2" size={28} />
+          <h3 className="text-lg font-semibold text-primary-900 mb-1">Quản lý người dùng</h3>
+          <p className="text-sm text-primary-600">Xem và quản lý tất cả người dùng</p>
         </Link>
 
-        <Link to="/admin/shops" className="card p-6 hover:shadow-lg transition-shadow">
-          <MdStorefront className="text-primary-700 mb-3" size={32} />
-          <h3 className="text-xl font-semibold text-primary-900 mb-2">Quản lý cửa hàng</h3>
-          <p className="text-primary-600">Duyệt và quản lý cửa hàng</p>
+        <Link to="/admin/shops" className="card p-4 hover:shadow-lg transition-shadow flex-1 min-w-[200px]">
+          <MdStorefront className="text-primary-700 mb-2" size={28} />
+          <h3 className="text-lg font-semibold text-primary-900 mb-1">Quản lý cửa hàng</h3>
+          <p className="text-sm text-primary-600">Duyệt và quản lý cửa hàng</p>
           {stats.pendingShops > 0 && (
-            <span className="inline-block mt-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+            <span className="inline-block mt-2 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
               {stats.pendingShops} chờ duyệt
             </span>
           )}
         </Link>
 
-        <Link to="/admin/orders" className="card p-6 hover:shadow-lg transition-shadow">
-          <FiShoppingBag className="text-primary-700 mb-3" size={32} />
-          <h3 className="text-xl font-semibold text-primary-900 mb-2">Quản lý đơn hàng</h3>
-          <p className="text-primary-600">Xem tất cả đơn hàng</p>
+        <Link to="/admin/orders" className="card p-4 hover:shadow-lg transition-shadow flex-1 min-w-[200px]">
+          <FiShoppingBag className="text-primary-700 mb-2" size={28} />
+          <h3 className="text-lg font-semibold text-primary-900 mb-1">Quản lý đơn hàng</h3>
+          <p className="text-sm text-primary-600">Xem tất cả đơn hàng</p>
         </Link>
 
-        <Link to="/admin/categories" className="card p-6 hover:shadow-lg transition-shadow">
-          <FiTrendingUp className="text-primary-700 mb-3" size={32} />
-          <h3 className="text-xl font-semibold text-primary-900 mb-2">Quản lý danh mục</h3>
-          <p className="text-primary-600">Thêm và sửa danh mục</p>
+        <Link to="/admin/categories" className="card p-4 hover:shadow-lg transition-shadow flex-1 min-w-[200px]">
+          <FiTrendingUp className="text-primary-700 mb-2" size={28} />
+          <h3 className="text-lg font-semibold text-primary-900 mb-1">Quản lý danh mục</h3>
+          <p className="text-sm text-primary-600">Thêm và sửa danh mục</p>
         </Link>
 
-        <Link to="/admin/commissions" className="card p-6 hover:shadow-lg transition-shadow">
-          <FiDollarSign className="text-primary-700 mb-3" size={32} />
-          <h3 className="text-xl font-semibold text-primary-900 mb-2">Quản lý hoa hồng</h3>
-          <p className="text-primary-600">Theo dõi thanh toán hoa hồng</p>
+        <Link to="/admin/commissions" className="card p-4 hover:shadow-lg transition-shadow flex-1 min-w-[200px]">
+          <FiDollarSign className="text-primary-700 mb-2" size={28} />
+          <h3 className="text-lg font-semibold text-primary-900 mb-1">Quản lý hoa hồng</h3>
+          <p className="text-sm text-primary-600">Theo dõi thanh toán hoa hồng</p>
         </Link>
       </div>
 
@@ -181,22 +182,22 @@ const AdminDashboard = () => {
       </div>
 
       {/* Commission Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="card p-6 bg-gradient-to-br from-orange-50 to-orange-100">
-          <h3 className="text-lg font-bold text-orange-900 mb-4 flex items-center">
-            💵 Hoa hồng Admin ({(stats.commissionRate * 100).toFixed(0)}%)
+      <div className="flex flex-wrap gap-4 mb-8">
+        <div className="card p-4 bg-gradient-to-br from-orange-50 to-orange-100 flex-1 min-w-[200px]">
+          <h3 className="text-base font-bold text-orange-900 mb-3 flex items-center">
+            💵 Hoa hồng ({(stats.commissionRate * 100).toFixed(0)}%)
           </h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-orange-700">Tổng doanh thu:</span>
-              <span className="text-lg font-semibold text-orange-900">
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-orange-700">Doanh thu:</span>
+              <span className="font-semibold text-orange-900">
                 {formatCurrency(stats.totalRevenue)}
               </span>
             </div>
-            <div className="border-t border-orange-200 pt-3">
+            <div className="border-t border-orange-200 pt-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-semibold text-orange-700">Hoa hồng ({(stats.commissionRate * 100).toFixed(0)}%):</span>
-                <span className="text-2xl font-bold text-orange-600">
+                <span className="text-xs font-semibold text-orange-700">Hoa hồng:</span>
+                <span className="text-lg font-bold text-orange-600">
                   {formatCurrency(stats.totalCommission)}
                 </span>
               </div>
@@ -204,17 +205,17 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="card p-6 bg-gradient-to-br from-indigo-50 to-indigo-100">
-          <h3 className="text-lg font-bold text-indigo-900 mb-4 flex items-center">
-            📈 Tóm tắt doanh thu
+        <div className="card p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 flex-1 min-w-[200px]">
+          <h3 className="text-base font-bold text-indigo-900 mb-3 flex items-center">
+            📈 Đơn hoàn thành
           </h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-              <span className="text-sm text-indigo-700">Đơn hàng hoàn thành:</span>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm p-2 bg-white rounded">
+              <span className="text-indigo-700">Tổng:</span>
               <span className="font-semibold text-indigo-900">{stats.totalOrders}</span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-              <span className="text-sm text-indigo-700">Trung bình/đơn:</span>
+            <div className="flex justify-between items-center text-sm p-2 bg-white rounded">
+              <span className="text-indigo-700">Trung bình:</span>
               <span className="font-semibold text-indigo-900">
                 {stats.totalOrders > 0 
                   ? formatCurrency(stats.totalRevenue / stats.totalOrders)
@@ -222,9 +223,58 @@ const AdminDashboard = () => {
                 }
               </span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-              <span className="text-sm text-indigo-700">Cửa hàng hoạt động:</span>
-              <span className="font-semibold text-indigo-900">{stats.totalShops}</span>
+          </div>
+        </div>
+
+        <div className="card p-4 bg-gradient-to-br from-green-50 to-green-100 flex-1 min-w-[200px]">
+          <h3 className="text-base font-bold text-green-900 mb-3 flex items-center">
+            🏪 Cửa hàng
+          </h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm p-2 bg-white rounded">
+              <span className="text-green-700">Hoạt động:</span>
+              <span className="font-semibold text-green-900">{stats.totalShops}</span>
+            </div>
+            <div className="flex justify-between items-center text-sm p-2 bg-white rounded">
+              <span className="text-green-700">Chờ duyệt:</span>
+              <span className="font-semibold text-yellow-600">{stats.pendingShops}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="card p-4 bg-gradient-to-br from-blue-50 to-blue-100 flex-1 min-w-[200px]">
+          <h3 className="text-base font-bold text-blue-900 mb-3 flex items-center">
+            👥 Người dùng
+          </h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm p-2 bg-white rounded">
+              <span className="text-blue-700">Tổng:</span>
+              <span className="font-semibold text-blue-900">{stats.totalUsers}</span>
+            </div>
+            <div className="flex justify-between items-center text-sm p-2 bg-white rounded">
+              <span className="text-blue-700">Hoạt động:</span>
+              <span className="font-semibold text-blue-900">{stats.totalUsers}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="card p-4 bg-gradient-to-br from-purple-50 to-purple-100 flex-1 min-w-[200px]">
+          <h3 className="text-base font-bold text-purple-900 mb-3 flex items-center">
+            📊 Tỷ lệ
+          </h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm p-2 bg-white rounded">
+              <span className="text-purple-700">Hoa hồng:</span>
+              <span className="font-semibold text-purple-900">{(stats.commissionRate * 100).toFixed(0)}%</span>
+            </div>
+            <div className="flex justify-between items-center text-sm p-2 bg-white rounded">
+              <span className="text-purple-700">Trung bình/đơn:</span>
+              <span className="font-semibold text-purple-900">
+                {stats.totalOrders > 0 
+                  ? formatCurrency(stats.totalCommission / stats.totalOrders)
+                  : '0 ₫'
+                }
+              </span>
             </div>
           </div>
         </div>
@@ -271,6 +321,9 @@ const AdminDashboard = () => {
 
       {/* Revenue Chart */}
       <RevenueChart />
+
+      {/* Yearly Revenue Chart */}
+      <YearlyRevenueChart />
 
       {/* Top Selling Products */}
       <TopSellingProducts />

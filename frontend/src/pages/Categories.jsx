@@ -26,13 +26,7 @@ const Categories = () => {
     return products.filter(p => p.category?._id === categoryId).length;
   };
 
-  // Tính giá trung bình cho mỗi danh mục
-  const getCategoryAveragePrice = (categoryId) => {
-    const categoryProducts = products.filter(p => p.category?._id === categoryId);
-    if (categoryProducts.length === 0) return 0;
-    const total = categoryProducts.reduce((sum, p) => sum + (p.price || 0), 0);
-    return Math.round(total / categoryProducts.length);
-  };
+
 
   // Tính tổng doanh số (số lượng bán) cho mỗi danh mục
   const getCategorySalesCount = (categoryId) => {
@@ -59,7 +53,6 @@ const Categories = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {categories.map((category) => {
             const productCount = getCategoryProductCount(category._id);
-            const avgPrice = getCategoryAveragePrice(category._id);
             const salesCount = getCategorySalesCount(category._id);
             return (
               <Link
@@ -84,7 +77,7 @@ const Categories = () => {
                   </div>
 
                   {/* Stats Grid */}
-                  <div className="grid grid-cols-3 gap-3 py-4 border-y border-primary-200 mb-4">
+                  <div className="grid grid-cols-2 gap-3 py-4 border-y border-primary-200 mb-4">
                     <div className="text-center">
                       <div className="text-lg font-bold text-accent-600">{productCount}</div>
                       <div className="text-xs text-primary-600">Sản phẩm</div>
@@ -92,10 +85,6 @@ const Categories = () => {
                     <div className="text-center">
                       <div className="text-lg font-bold text-accent-600">{salesCount}</div>
                       <div className="text-xs text-primary-600">Đã bán</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-accent-600">{avgPrice.toLocaleString()}₫</div>
-                      <div className="text-xs text-primary-600">Giá TB</div>
                     </div>
                   </div>
 
@@ -122,7 +111,6 @@ const Categories = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {categories.slice(0, 2).map((category) => {
               const productCount = getCategoryProductCount(category._id);
-              const avgPrice = getCategoryAveragePrice(category._id);
               const salesCount = getCategorySalesCount(category._id);
               return (
                 <Link
@@ -141,7 +129,7 @@ const Categories = () => {
                       </div>
 
                       {/* Stats Grid */}
-                      <div className="grid grid-cols-3 gap-3 py-4 border-t border-primary-200 mb-4">
+                      <div className="grid grid-cols-2 gap-3 py-4 border-t border-primary-200 mb-4">
                         <div>
                           <div className="flex items-center gap-1 mb-1">
                             <FiShoppingBag size={16} className="text-accent-600" />
@@ -155,10 +143,6 @@ const Categories = () => {
                             <span className="text-lg font-bold text-accent-600">{salesCount}</span>
                           </div>
                           <div className="text-xs text-primary-600">Đã bán</div>
-                        </div>
-                        <div>
-                          <div className="text-lg font-bold text-accent-600 mb-1">{avgPrice.toLocaleString()}₫</div>
-                          <div className="text-xs text-primary-600">Giá TB</div>
                         </div>
                       </div>
 

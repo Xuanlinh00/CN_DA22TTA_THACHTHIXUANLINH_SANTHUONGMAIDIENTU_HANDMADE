@@ -11,7 +11,11 @@ const {
   getShopById, 
   updateShop, 
   adminApproveShop,
-  getMonthlyRevenue
+  getMonthlyRevenue,
+  getDailyRevenue,
+  getTopSellingProducts,
+  getCommission,
+  payCommission
 } = require('../controllers/shop.controller');
 
 // Import Middleware
@@ -55,8 +59,14 @@ router.put('/profile', protect, authorize('shop_owner', 'admin'), upload.fields(
   { name: 'coverImage', maxCount: 1 }
 ]), updateShop);
 
-// 2.5. Lấy doanh thu theo tháng (Shop Owner)
+// 2.5. Stats routes (phải trước /:id)
 router.get('/stats/monthly-revenue', protect, authorize('shop_owner', 'admin'), getMonthlyRevenue);
+router.get('/stats/daily-revenue', protect, authorize('shop_owner', 'admin'), getDailyRevenue);
+router.get('/stats/top-selling-products', protect, authorize('shop_owner', 'admin'), getTopSellingProducts);
+
+// 2.7. Commission routes (phải trước /:id)
+router.get('/commission', protect, authorize('shop_owner', 'admin'), getCommission);
+router.post('/commission/pay', protect, authorize('shop_owner', 'admin'), payCommission);
 
 // 3. Admin duyệt shop - CHỈ ADMIN (phải trước /:id)
 router.patch('/:id/status', protect, authorize('admin'), adminApproveShop);

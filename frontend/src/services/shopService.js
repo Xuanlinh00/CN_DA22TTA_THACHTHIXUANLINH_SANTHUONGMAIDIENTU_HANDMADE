@@ -34,5 +34,25 @@ export const shopService = {
   getMonthlyRevenue: async () => {
     const response = await axios.get('/shops/stats/monthly-revenue');
     return response.data;
+  },
+
+  getDailyRevenue: async (year, month) => {
+    const response = await axios.get('/shops/stats/daily-revenue', { params: { year, month } });
+    return response.data;
+  },
+
+  getTopSellingProducts: async () => {
+    const response = await axios.get('/shops/stats/top-selling-products');
+    return response.data;
+  },
+
+  getCommission: async () => {
+    const response = await axios.get('/shops/commission');
+    return response.data;
+  },
+
+  payCommission: async (data) => {
+    const response = await axios.post('/shops/commission/pay', data);
+    return response.data;
   }
 };

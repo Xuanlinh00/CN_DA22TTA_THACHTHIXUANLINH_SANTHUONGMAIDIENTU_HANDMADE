@@ -44,20 +44,24 @@ const ShopProducts = () => {
   // Update form values when editing product changes
   useEffect(() => {
     if (editingProduct) {
+      console.log('🔄 Editing product:', editingProduct);
       setValue('name', editingProduct.name);
       setValue('price', editingProduct.price);
       setValue('description', editingProduct.description);
       setValue('material', editingProduct.material || '');
-      setValue('category', editingProduct.category?._id || '');
-      setValue('stockQuantity', editingProduct.stockQuantity);
+      // Xử lý category - có thể là object hoặc string
+      const categoryId = typeof editingProduct.category === 'object' 
+        ? editingProduct.category?._id 
+        : editingProduct.category;
+      console.log('📂 Category:', editingProduct.category, '-> ID:', categoryId);
+      setValue('category', categoryId || '');
+      setValue('stockQuantity', editingProduct.stockQuantity || 0);
       setValue('dimensions', editingProduct.dimensions || '');
       setValue('weight', editingProduct.weight || '');
       setValue('customizable', editingProduct.customizable || false);
       setValue('tags', editingProduct.tags || '');
-    } else {
-      reset();
     }
-  }, [editingProduct, setValue, reset]);
+  }, [editingProduct, setValue]);
 
   const { data: shopData } = useQuery({
     queryKey: ['my-shop'],
@@ -101,7 +105,7 @@ const ShopProducts = () => {
       return productService.create(formData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['shop-products']);
+      queryClient.invalidateQueries({ queryKey: ['shop-products'] });
       toast.success('Thêm sản phẩm thành công');
       setShowModal(false);
       reset();
@@ -113,14 +117,20 @@ const ShopProducts = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data) => productService.update(editingProduct._id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['shop-products']);
+    mutationFn: (data) => {
+      console.log('📤 Updating product with data:', data);
+      return productService.update(editingProduct._id, data);
+    },
+    onSuccess: (response) => {
+      console.log('✅ Update response:', response);
+      queryClient.invalidateQueries({ queryKey: ['shop-products'] });
       toast.success('Cập nhật sản phẩm thành công');
       setShowModal(false);
+      setEditingProduct(null);
       reset();
     },
     onError: (error) => {
+      console.error('❌ Update error:', error);
       toast.error(error.response?.data?.message || 'Cập nhật sản phẩm thất bại');
     },
   });
@@ -128,7 +138,7 @@ const ShopProducts = () => {
   const deleteMutation = useMutation({
     mutationFn: productService.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries(['shop-products']);
+      queryClient.invalidateQueries({ queryKey: ['shop-products'] });
       toast.success('Xóa sản phẩm thành công');
     },
     onError: () => {
@@ -152,6 +162,9 @@ const ShopProducts = () => {
   };
 
   const onSubmit = (data) => {
+    console.log('📋 Form submitted with data:', data);
+    console.log('📋 Form errors:', Object.keys(errors).length > 0 ? errors : 'No errors');
+    
     // Kiểm tra tên sản phẩm trùng trong cùng cửa hàng
     const isDuplicate = products.some(product => 
       product.name.toLowerCase() === data.name.toLowerCase() &&
@@ -163,14 +176,30 @@ const ShopProducts = () => {
       return;
     }
 
+    // Đảm bảo tất cả field được gửi
+    const submitData = {
+      name: data.name || '',
+      price: Number(data.price) || 0,
+      description: data.description || '',
+      category: data.category || '',
+      stockQuantity: Number(data.stockQuantity) || 0,
+      material: data.material || '',
+      dimensions: data.dimensions || '',
+      weight: Number(data.weight) || 0,
+      customizable: data.customizable || false,
+      tags: data.tags || ''
+    };
+
+    console.log('📋 Form data to submit:', submitData);
+
     if (editingProduct) {
-      updateMutation.mutate(data);
+      updateMutation.mutate(submitData);
     } else {
       if (uploadedImages.length === 0) {
         toast.error('Vui lòng upload ít nhất 1 ảnh');
         return;
       }
-      createMutation.mutate(data);
+      createMutation.mutate(submitData);
     }
   };
 
@@ -363,10 +392,17 @@ const ShopProducts = () => {
               {/* Danh mục */}
               <div>
                 <label className="block text-sm font-medium text-primary-700 mb-1">
-                  Danh mục *
+                  Danh mục {editingProduct ? '' : '*'}
                 </label>
                 <select
-                  {...register('category', { required: 'Danh mục là bắt buộc' })}
+                  {...register('category', { 
+                    validate: (value) => {
+                      if (!editingProduct && !value) {
+                        return 'Danh mục là bắt buộc';
+                      }
+                      return true;
+                    }
+                  })}
                   className="input-field"
                 >
                   <option value="">Chọn danh mục</option>

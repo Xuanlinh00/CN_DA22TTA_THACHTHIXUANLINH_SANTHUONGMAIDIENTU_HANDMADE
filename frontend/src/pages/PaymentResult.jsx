@@ -40,10 +40,10 @@ const PaymentResult = () => {
             <>
               <FiCheckCircle className="w-20 h-20 text-green-500 mx-auto mb-4" />
               <h1 className="text-2xl font-bold text-primary-900 mb-2">
-                Thanh toán thành công!
+                Đặt hàng thành công!
               </h1>
               <p className="text-primary-600 mb-6">
-                Đơn hàng <span className="font-semibold">{orderNumber}</span> đã được thanh toán thành công.
+                Đơn hàng <span className="font-semibold">{orderNumber}</span> đã được đặt thành công. Thanh toán đã được xác nhận.
               </p>
               <div className="space-y-3">
                 <button

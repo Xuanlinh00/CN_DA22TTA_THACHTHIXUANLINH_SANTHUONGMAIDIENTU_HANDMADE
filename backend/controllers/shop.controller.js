@@ -1,14 +1,28 @@
 const Shop = require('../models/shop.model');
 const User = require('../models/user.model');
 
-// --- HELPER: Kiểm tra số điện thoại Việt Nam ---
+// ========== HELPER FUNCTIONS ==========
+
+/**
+ * Kiểm tra số điện thoại Việt Nam hợp lệ
+ * @param {string} phone - Số điện thoại
+ * @returns {boolean}
+ */
 const isValidPhone = (phone) => {
   const regex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/g;
   return regex.test(phone);
 };
 
-// --- 1. ĐĂNG KÝ GIAN HÀNG MỚI ---
-// @route POST /api/shops
+// ========== QUẢN LÝ CỬA HÀNG ==========
+
+/**
+ * 1. ĐĂNG KÝ GIAN HÀNG MỚI
+ * - Kiểm tra user chưa có shop
+ * - Kiểm tra tên shop không trùng
+ * - Upload ảnh avatar và cover image
+ * - Trạng thái mặc định: pending (chờ admin duyệt)
+ * - Cập nhật role user thành shop_owner
+ */
 const createShop = async (req, res) => {
   try {
     const { shopName, description, street, ward, district, city, phone } = req.body;
@@ -88,6 +102,12 @@ const createShop = async (req, res) => {
 
 // --- 2. LẤY TẤT CẢ SHOP (Public - Có Phân trang & Tìm kiếm) ---
 // @route GET /api/shops?page=1&keyword=...
+/**
+ * 2. LẤY DANH SÁCH CỬA HÀNG
+ * - Chỉ lấy shop đang hoạt động (active)
+ * - Hỗ trợ tìm kiếm theo tên
+ * - Phân trang
+ */
 const getAllShops = async (req, res) => {
   try {
     const pageSize = 10;
@@ -126,6 +146,10 @@ const getAllShops = async (req, res) => {
 
 // --- 3. XEM CHI TIẾT SHOP (Public) ---
 // @route GET /api/shops/:id
+/**
+ * 3. LẤY THÔNG TIN CHI TIẾT CỬA HÀNG
+ * - Nếu shop chưa active, chỉ chủ shop hoặc admin mới xem được
+ */
 const getShopById = async (req, res) => {
   try {
     const shop = await Shop.findById(req.params.id)
@@ -155,6 +179,10 @@ const getShopById = async (req, res) => {
 
 // --- 4. XEM SHOP CỦA TÔI (Vendor Dashboard) ---
 // @route GET /api/shops/profile
+/**
+ * 4. LẤY THÔNG TIN SHOP CỦA SHOP OWNER
+ * - Lấy shop dựa trên ID user đang đăng nhập
+ */
 const getMyShop = async (req, res) => {
   try {
     // Tìm shop dựa trên ID của user đang đăng nhập (req.user lấy từ token)
@@ -172,6 +200,12 @@ const getMyShop = async (req, res) => {
 
 // --- 5. CẬP NHẬT SHOP CỦA TÔI (Vendor) ---
 // @route PUT /api/shops/profile
+/**
+ * 5. CẬP NHẬT THÔNG TIN SHOP
+ * - Shop owner cập nhật thông tin gian hàng
+ * - Kiểm tra tên shop không trùng
+ * - Upload ảnh avatar và cover image
+ */
 const updateShop = async (req, res) => {
   try {
     const { shopName, description, street, ward, district, city, phone } = req.body;
@@ -224,6 +258,10 @@ const updateShop = async (req, res) => {
 
 // --- 6. ADMIN DUYỆT/KHOÁ SHOP ---
 // @route PATCH /api/shops/:id/status
+/**
+ * 6. ADMIN DUYỆT HOẶC TỪ CHỐI CỬA HÀNG
+ * - Cập nhật trạng thái shop (active, rejected, pending)
+ */
 const adminApproveShop = async (req, res) => {
   try {
     const { status } = req.body; // 'active', 'rejected', 'pending'
@@ -247,6 +285,12 @@ const adminApproveShop = async (req, res) => {
 
 // --- 7. LẤY DOANH THU THEO THÁNG (Shop Owner) ---
 // @route GET /api/shops/stats/monthly-revenue
+/**
+ * 7. THỐNG KÊ DOANH THU THEO THÁNG
+ * - Tính doanh thu từ các đơn hàng đã giao
+ * - Chỉ tính sản phẩm của shop này
+ * - Trả về dữ liệu 12 tháng
+ */
 const getMonthlyRevenue = async (req, res) => {
   try {
     const currentYear = new Date().getFullYear();
@@ -297,6 +341,258 @@ const getMonthlyRevenue = async (req, res) => {
   }
 };
 
+// --- 7.5 LẤY DOANH THU THEO NGÀY (Shop Owner) ---
+// @route GET /api/shops/stats/daily-revenue
+/**
+ * 7.5 THỐNG KÊ DOANH THU THEO NGÀY
+ * - Tính doanh thu từ các đơn hàng đã giao
+ * - Hỗ trợ lọc theo tháng/năm
+ */
+const getDailyRevenue = async (req, res) => {
+  try {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
+    const month = Number(req.query.month) || currentMonth;
+    const year = Number(req.query.year) || currentYear;
+    
+    const shop = await Shop.findOne({ user: req.user._id });
+
+    if (!shop) {
+      return res.status(404).json({ success: false, message: 'Gian hàng không tồn tại' });
+    }
+
+    const Order = require('../models/order.model');
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const dailyData = [];
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayStart = new Date(year, month, day, 0, 0, 0);
+      const dayEnd = new Date(year, month, day, 23, 59, 59);
+
+      const orders = await Order.find({
+        status: 'delivered',
+        createdAt: { $gte: dayStart, $lte: dayEnd },
+        'items.shop': shop._id
+      });
+
+      let revenue = 0;
+      let orderCount = 0;
+      
+      orders.forEach(order => {
+        const shopItems = order.items.filter(item => item.shop.toString() === shop._id.toString());
+        if (shopItems.length > 0) {
+          revenue += shopItems.reduce((sum, item) => sum + item.subtotal, 0);
+          orderCount++;
+        }
+      });
+      
+      dailyData.push({
+        day: day,
+        revenue: revenue,
+        orders: orderCount
+      });
+    }
+
+    res.status(200).json({ success: true, data: dailyData });
+  } catch (error) {
+    console.error('❌ Error getting daily revenue:', error);
+    res.status(500).json({ success: false, message: 'Không thể thống kê doanh thu theo ngày: ' + error.message });
+  }
+};
+
+// --- 8. LẤY SẢN PHẨM BÁN CHẠY CỦA SHOP (Shop Owner) ---
+// @route GET /api/shops/stats/top-selling-products
+/**
+ * 8. LẤY TOP 10 SẢN PHẨM BÁN CHẠY
+ * - Tính từ các đơn hàng đã giao
+ * - Sắp xếp theo số lượng bán
+ */
+const getTopSellingProducts = async (req, res) => {
+  try {
+    const shop = await Shop.findOne({ user: req.user._id });
+
+    if (!shop) {
+      return res.status(404).json({ success: false, message: 'Gian hàng không tồn tại' });
+    }
+
+    const Order = require('../models/order.model');
+    const Product = require('../models/product.model');
+
+    // Lấy tất cả orders đã giao thành công
+    const orders = await Order.find({
+      status: 'delivered',
+      'items.shop': shop._id
+    });
+
+    // Tính toán sản phẩm bán chạy
+    const productStats = {};
+    
+    orders.forEach(order => {
+      order.items?.forEach(item => {
+        if (item.shop.toString() === shop._id.toString()) {
+          const productId = item.product?._id || item.product;
+          if (!productStats[productId]) {
+            productStats[productId] = {
+              productId,
+              name: item.name,
+              image: item.image,
+              quantity: 0,
+              revenue: 0,
+              price: item.price
+            };
+          }
+          productStats[productId].quantity += item.quantity;
+          productStats[productId].revenue += item.subtotal;
+        }
+      });
+    });
+
+    const topProducts = Object.values(productStats)
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 10);
+
+    res.status(200).json({ success: true, data: topProducts });
+  } catch (error) {
+    console.error('❌ Error getting top selling products:', error);
+    res.status(500).json({ success: false, message: 'Không thể lấy sản phẩm bán chạy: ' + error.message });
+  }
+};
+
+// --- 9. LẤY THÔNG TIN HỎA HỒNG (Shop Owner) ---
+// @route GET /api/shops/commission
+/**
+ * 9. THỐNG KÊ HỎA HỒNG
+ * - Tính hoa hồng phải trả (5% doanh thu)
+ * - Tính hoa hồng đã trả
+ * - Tính hoa hồng còn lại
+ */
+const getCommission = async (req, res) => {
+  try {
+    const shop = await Shop.findOne({ user: req.user._id });
+
+    if (!shop) {
+      return res.status(404).json({ success: false, message: 'Gian hàng không tồn tại' });
+    }
+
+    // Tính toán hoa hồng từ các đơn hàng đã giao
+    const Order = require('../models/order.model');
+    
+    const orders = await Order.find({
+      status: 'delivered',
+      'items.shop': shop._id
+    });
+
+    // Tính tổng hoa hồng phải trả (5% của subtotal)
+    let totalCommissionOwed = 0;
+    orders.forEach(order => {
+      const shopItems = order.items.filter(item => item.shop.toString() === shop._id.toString());
+      if (shopItems.length > 0) {
+        const shopSubtotal = shopItems.reduce((sum, item) => sum + item.subtotal, 0);
+        totalCommissionOwed += shopSubtotal * 0.05; // 5% commission
+      }
+    });
+
+    // Hoa hồng kiếm được = Tổng hoa hồng phải trả - Đã trả
+    const commissionEarned = totalCommissionOwed - (shop.paidCommission || 0);
+
+    res.json({
+      success: true,
+      data: {
+        totalCommission: totalCommissionOwed, // Tổng hoa hồng phải trả cho admin
+        paidCommission: shop.paidCommission || 0, // Đã trả cho admin
+        commissionEarned: commissionEarned, // Hoa hồng kiếm được (có thể rút)
+        commissionStatus: shop.commissionStatus || 'unpaid',
+        commissionPaidAt: shop.commissionPaidAt
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// --- 10. YÊU CẦU RÚT TIỀN HỎA HỒNG (Shop Owner) ---
+// @route POST /api/shops/commission/withdraw
+// --- 11. THANH TOÁN HỎA HỒNG CHO QUẢN TRỊ (Shop Owner) ---
+// @route POST /api/shops/commission/pay
+/**
+ * 11. THANH TOÁN HỎA HỒNG
+ * - Kiểm tra số tiền hợp lệ
+ * - Cập nhật paidCommission
+ * - Cập nhật trạng thái hoa hồng
+ */
+const payCommission = async (req, res) => {
+  try {
+    const { amount } = req.body;
+
+    // Validation
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ success: false, message: 'Số tiền không hợp lệ' });
+    }
+
+    const shop = await Shop.findOne({ user: req.user._id });
+    if (!shop) {
+      return res.status(404).json({ success: false, message: 'Gian hàng không tồn tại' });
+    }
+
+    // Tính toán hoa hồng từ các đơn hàng đã giao
+    const Order = require('../models/order.model');
+    
+    const orders = await Order.find({
+      status: 'delivered',
+      'items.shop': shop._id
+    });
+
+    // Tính tổng hoa hồng phải trả
+    let totalCommissionOwed = 0;
+    orders.forEach(order => {
+      const shopItems = order.items.filter(item => item.shop.toString() === shop._id.toString());
+      if (shopItems.length > 0) {
+        const shopSubtotal = shopItems.reduce((sum, item) => sum + item.subtotal, 0);
+        totalCommissionOwed += shopSubtotal * 0.05; // 5% commission
+      }
+    });
+
+    if (amount > totalCommissionOwed) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Số tiền thanh toán không được vượt quá ${totalCommissionOwed}` 
+      });
+    }
+
+    // Cập nhật paidCommission trên Shop
+    shop.paidCommission = (shop.paidCommission || 0) + amount;
+    shop.commissionPaidAt = new Date();
+    
+    // Cập nhật trạng thái
+    if (shop.paidCommission >= totalCommissionOwed) {
+      shop.commissionStatus = 'paid';
+    } else if (shop.paidCommission > 0) {
+      shop.commissionStatus = 'partial';
+    }
+    
+    await shop.save();
+
+    // Tạo payment request
+    const CommissionPayment = require('../models/commissionPayment.model');
+    
+    const payment = await CommissionPayment.create({
+      shop: shop._id,
+      amount,
+      status: 'completed',
+      requestedAt: new Date(),
+      completedAt: new Date()
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Thanh toán hoa hồng thành công',
+      data: payment
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   createShop,
   getAllShops,
@@ -304,5 +600,9 @@ module.exports = {
   getMyShop,
   updateShop,
   adminApproveShop,
-  getMonthlyRevenue
+  getMonthlyRevenue,
+  getDailyRevenue,
+  getTopSellingProducts,
+  getCommission,
+  payCommission
 };

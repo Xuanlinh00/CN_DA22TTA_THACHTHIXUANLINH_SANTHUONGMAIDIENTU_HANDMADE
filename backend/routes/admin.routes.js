@@ -11,10 +11,14 @@ const {
   getAllUsers,
   deleteUser,
   updateUserRole,
+  // Orders
+  getAllOrders,
   // Stats
   getRevenueStats,
   getOrderStats,
   getMonthlyRevenue,
+  getDailyRevenue,
+  getTopSellingProducts,
   calculateCommission,
 } = require('../controllers/admin.controller.js');
 
@@ -32,10 +36,15 @@ router.get('/users', getAllUsers);
 router.delete('/users/:id', deleteUser);
 router.put('/users/:id/role', updateUserRole);
 
+// Orders
+router.get('/orders', getAllOrders);
+
 // Stats
 router.get('/stats/revenue', getRevenueStats);
 router.get('/stats/orders', getOrderStats);
 router.get('/stats/monthly-revenue', getMonthlyRevenue);
+router.get('/stats/daily-revenue', getDailyRevenue);
+router.get('/stats/top-selling-products', getTopSellingProducts);
 router.get('/stats/commission', calculateCommission);
 
 module.exports = router;

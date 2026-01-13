@@ -99,7 +99,14 @@ const Cart = () => {
                       }}
                       className="w-5 h-5 cursor-pointer"
                     />
-                    <img src={shop?.avatar || '/default-shop-avatar.jpg'} alt={shop?.shopName} className="w-10 h-10 rounded-full object-cover" />
+                    <img 
+                      src={getImageUrl(shop?.avatar)} 
+                      alt={shop?.shopName} 
+                      className="w-10 h-10 rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.src = '/default-shop-avatar.jpg';
+                      }}
+                    />
                     <Link to={`/shops/${shop?._id}`} className="font-semibold text-primary-900 hover:text-primary-700">
                       {shop?.shopName || 'Cửa hàng'}
                     </Link>

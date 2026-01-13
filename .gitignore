@@ -54,3 +54,5 @@ frontend/.env
 # Misc
 ~$*.docx
 *.docx~
+~WRL*.tmp
+~$*

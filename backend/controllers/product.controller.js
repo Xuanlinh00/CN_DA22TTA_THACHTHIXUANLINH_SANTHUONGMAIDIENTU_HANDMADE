@@ -3,7 +3,8 @@ const Category = require('../models/category.model');
 const multer = require('multer');
 const path = require('path');
 
-// Cấu hình multer cho upload ảnh
+// ========== CẤU HÌNH UPLOAD ẢNH ==========
+// Cấu hình multer cho upload ảnh sản phẩm
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/products/');
@@ -16,7 +17,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // Giới hạn 5MB
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
@@ -26,7 +27,14 @@ const upload = multer({
   }
 });
 
-// --- 0. LẤY SẢN PHẨM NỔI BẬT (Top searched + Top sold) ---
+// ========== QUẢN LÝ SẢN PHẨM ==========
+
+/**
+ * 0. LẤY SẢN PHẨM NỔI BẬT
+ * - Lấy top searched (50% số lượng)
+ * - Lấy top sold (50% số lượng còn lại)
+ * - Loại trừ sản phẩm trùng lặp
+ */
 const getFeaturedProducts = async (req, res) => {
   try {
     const limit = Number(req.query.limit) || 8;
@@ -66,6 +74,14 @@ const getFeaturedProducts = async (req, res) => {
 };
 
 // --- 1. LẤY TẤT CẢ SẢN PHẨM (Có Lọc & Phân trang) ---
+/**
+ * 1. LẤY DANH SÁCH SẢN PHẨM
+ * - Tìm kiếm theo tên, mô tả, chất liệu
+ * - Lọc theo danh mục, shop, giá
+ * - Sắp xếp theo giá, rating, lượt bán, lượt tìm kiếm
+ * - Phân trang
+ * - Tăng searchCount khi tìm kiếm
+ */
 const getProducts = async (req, res) => {
   try {
     // 1. Xử lý tìm kiếm theo tên (keyword) - Tìm kiếm linh hoạt
@@ -172,6 +188,12 @@ const getProducts = async (req, res) => {
 };
 
 // --- 2. LẤY CHI TIẾT SẢN PHẨM ---
+/**
+ * 2. LẤY THÔNG TIN CHI TIẾT SẢN PHẨM
+ * - Lấy thông tin sản phẩm, shop, danh mục
+ * - Populate reviews, questions
+ * - Tính toán phân bố đánh giá (ratingCount)
+ */
 const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
@@ -183,7 +205,30 @@ const getProductById = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Sản phẩm không tồn tại' });
     }
 
-    res.json({ success: true, data: product });
+    // Tính toán phân bố đánh giá (ratingCount)
+    const ratingCount = {
+      5: 0,
+      4: 0,
+      3: 0,
+      2: 0,
+      1: 0
+    };
+
+    // Đếm số lượng đánh giá cho mỗi mức sao
+    if (product.reviews && product.reviews.length > 0) {
+      product.reviews.forEach(review => {
+        const rating = Math.round(review.rating);
+        if (rating >= 1 && rating <= 5) {
+          ratingCount[rating]++;
+        }
+      });
+    }
+
+    // Thêm ratingCount vào response
+    const productData = product.toObject();
+    productData.ratingCount = ratingCount;
+
+    res.json({ success: true, data: productData });
   } catch (error) {
     console.error('Error getting product:', error);
     res.status(500).json({ success: false, message: error.message });
@@ -204,6 +249,12 @@ const uploadProductImages = (req, res, next) => {
 };
 
 // --- 3. TẠO SẢN PHẨM (Shop Owner) ---
+/**
+ * 3. TẠO SẢN PHẨM MỚI
+ * - Kiểm tra shop owner có gian hàng active
+ * - Upload nhiều ảnh (tối đa 8 ảnh)
+ * - Lưu thông tin sản phẩm
+ */
 const createProduct = async (req, res) => {
   try {
     const { 
@@ -300,9 +351,30 @@ const createProduct = async (req, res) => {
 };
 
 // --- 4. CẬP NHẬT SẢN PHẨM ---
+/**
+ * 4. CẬP NHẬT THÔNG TIN SẢN PHẨM
+ * - Chỉ chủ shop hoặc admin mới được sửa
+ * - Cập nhật tên, giá, mô tả, số lượng, v.v.
+ */
 const updateProduct = async (req, res) => {
   try {
-    const { name, price, description, image, category, countInStock } = req.body;
+    console.log('\n=== UPDATE PRODUCT ===');
+    console.log('📝 Request body:', req.body);
+    console.log('📝 Product ID:', req.params.id);
+    console.log('📝 User:', req.user?._id, 'Role:', req.user?.role);
+    
+    const { 
+      name, 
+      price, 
+      description, 
+      category, 
+      stockQuantity,
+      material,
+      dimensions,
+      weight,
+      customizable,
+      tags
+    } = req.body;
 
     const product = await Product.findById(req.params.id);
 
@@ -315,21 +387,57 @@ const updateProduct = async (req, res) => {
         return res.status(403).json({ success: false, message: 'Bạn không có quyền sửa sản phẩm này' });
     }
 
-    product.name = name || product.name;
-    product.price = price || product.price;
-    product.description = description || product.description;
-    product.image = image || product.image;
-    product.category = category || product.category;
-    product.countInStock = countInStock || product.countInStock;
+    // Cập nhật các field
+    if (name !== undefined && name !== null && name !== '') product.name = name.trim();
+    if (price !== undefined && price !== null && price !== '') product.price = Number(price);
+    if (description !== undefined && description !== null && description !== '') product.description = description.trim();
+    if (category !== undefined && category !== null && category !== '') product.category = category;
+    // Xử lý stockQuantity đặc biệt vì có thể là 0
+    if (stockQuantity !== undefined && stockQuantity !== null && stockQuantity !== '') {
+      product.stockQuantity = Number(stockQuantity);
+      console.log('✅ Updated stockQuantity to:', product.stockQuantity);
+    }
+    if (material !== undefined) product.material = material ? material.trim() : undefined;
+    if (dimensions !== undefined) product.dimensions = dimensions ? dimensions.trim() : undefined;
+    if (weight !== undefined) product.weight = weight ? Number(weight) : undefined;
+    if (customizable !== undefined) product.customizable = customizable === 'true' || customizable === true;
+    if (tags !== undefined) {
+      if (typeof tags === 'string') {
+        product.tags = tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+      } else if (Array.isArray(tags)) {
+        product.tags = tags;
+      } else {
+        product.tags = [];
+      }
+    }
 
     const updatedProduct = await product.save();
-    res.json({ success: true, data: updatedProduct });
+    await updatedProduct.populate(['shop', 'category']);
+    
+    console.log('✅ Product updated successfully');
+    console.log('📊 Updated product:', {
+      name: updatedProduct.name,
+      price: updatedProduct.price,
+      stockQuantity: updatedProduct.stockQuantity,
+      category: updatedProduct.category
+    });
+    
+    res.json({ 
+      success: true, 
+      message: 'Cập nhật sản phẩm thành công',
+      data: updatedProduct 
+    });
   } catch (error) {
+    console.error('❌ Error updating product:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // --- 5. XOÁ SẢN PHẨM ---
+/**
+ * 5. XÓA SẢN PHẨM
+ * - Chỉ chủ shop hoặc admin mới được xóa
+ */
 const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -351,6 +459,12 @@ const deleteProduct = async (req, res) => {
 };
 
 // --- 6. THÊM ĐÁNH GIÁ (REVIEW) ---
+/**
+ * 6. THÊM ĐÁNH GIÁ SẢN PHẨM
+ * - Mỗi người chỉ review 1 lần
+ * - Kiểm tra user đã mua sản phẩm (nếu có orderId)
+ * - Cập nhật rating trung bình
+ */
 const addReview = async (req, res) => {
   try {
     const { rating, comment, orderId } = req.body;
@@ -425,6 +539,11 @@ const addReview = async (req, res) => {
 };
 
 // --- 7. THÊM CÂU HỎI (QUESTION) ---
+/**
+ * 7. THÊM CÂU HỎI CHO SẢN PHẨM
+ * - Khách hàng có thể hỏi về sản phẩm
+ * - Chủ shop có thể trả lời
+ */
 const addQuestion = async (req, res) => {
   try {
     const { question } = req.body;
@@ -455,8 +574,11 @@ const addQuestion = async (req, res) => {
   }
 };
 
-// --- 8. (Optional) TRẢ LỜI CÂU HỎI (Cho Vendor/Admin) ---
-// Nếu bạn muốn phát triển thêm: Cho phép chủ shop trả lời câu hỏi của khách
+// --- 8. TRẢ LỜI CÂU HỎI (Cho Vendor/Admin) ---
+/**
+ * 8. TRẢ LỜI CÂU HỎI
+ * - Chủ shop trả lời câu hỏi của khách
+ */
 const answerQuestion = async (req, res) => {
     try {
         const { answer } = req.body;

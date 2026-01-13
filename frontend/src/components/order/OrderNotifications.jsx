@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FiBell, FiPackage, FiTruck, FiCheckCircle } from 'react-icons/fi';
+import { FiBell, FiPackage, FiTruck, FiCheckCircle, FiX } from 'react-icons/fi';
 import { orderService } from '../../services/orderService';
 import { formatDateTime } from '../../utils/formatters';
 import useAuthStore from '../../stores/authStore';
 
 const OrderNotifications = () => {
   const { user } = useAuthStore();
+  const [dismissedNotifications, setDismissedNotifications] = useState(new Set());
   
   const { data: ordersData } = useQuery({
     queryKey: ['my-orders'],
@@ -23,8 +25,12 @@ const OrderNotifications = () => {
     const updatedAt = new Date(order.updatedAt);
     const now = new Date();
     const diffHours = (now - updatedAt) / (1000 * 60 * 60);
-    return diffHours <= 24 && order.status !== 'pending';
+    return diffHours <= 24 && order.status !== 'pending' && !dismissedNotifications.has(order._id);
   });
+
+  const handleDismiss = (orderId) => {
+    setDismissedNotifications(prev => new Set([...prev, orderId]));
+  };
 
   const getNotificationIcon = (status) => {
     switch (status) {
@@ -78,6 +84,14 @@ const OrderNotifications = () => {
                     {formatDateTime(order.updatedAt)}
                   </p>
                 </div>
+
+                <button
+                  onClick={() => handleDismiss(order._id)}
+                  className="flex-shrink-0 text-primary-400 hover:text-primary-600 transition-colors"
+                  aria-label="Đóng thông báo"
+                >
+                  <FiX size={18} />
+                </button>
               </div>
             </div>
           );

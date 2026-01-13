@@ -23,11 +23,11 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <Link to={`/products/${product._id}`} className="card overflow-hidden group">
+    <Link to={`/products/${product._id}`} className="card overflow-hidden group flex flex-col h-full">
       {/* Image */}
-      <div className="relative overflow-hidden aspect-square">
+      <div className="relative overflow-hidden aspect-square flex-shrink-0">
         <img
-src={getImageUrl(product.images?.[0])}
+          src={getImageUrl(product.images?.[0])}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
         />
@@ -41,29 +41,35 @@ src={getImageUrl(product.images?.[0])}
       </div>
 
       {/* Content */}
-      <div className="p-4">
-        <h3 className="font-semibold text-primary-900 mb-2 line-clamp-2 group-hover:text-primary-700 transition-colors">
+      <div className="p-4 flex flex-col flex-grow">
+        {/* Product Name - Fixed height */}
+        <h3 className="font-semibold text-primary-900 mb-2 line-clamp-2 group-hover:text-primary-700 transition-colors h-14">
           {product.name}
         </h3>
 
-        {/* Shop Name */}
-        <p className="text-sm text-primary-600 mb-2">
+        {/* Shop Name - Fixed height */}
+        <p className="text-sm text-primary-600 mb-2 h-5 line-clamp-1">
           {product.shop?.shopName || 'Shop'}
         </p>
 
-        {/* Rating */}
-        {product.rating > 0 && (
-          <div className="flex items-center space-x-1 mb-2">
-            <FiStar className="text-yellow-500 fill-yellow-500" size={16} />
-            <span className="text-sm font-medium">{product.rating.toFixed(1)}</span>
-            <span className="text-sm text-primary-500">
-              ({product.numReviews || 0})
-            </span>
-          </div>
-        )}
+        {/* Rating - Fixed height */}
+        <div className="h-6 mb-2">
+          {product.rating > 0 && (
+            <div className="flex items-center space-x-1">
+              <FiStar className="text-yellow-500 fill-yellow-500" size={16} />
+              <span className="text-sm font-medium">{product.rating.toFixed(1)}</span>
+              <span className="text-sm text-primary-500">
+                ({product.numReviews || 0})
+              </span>
+            </div>
+          )}
+        </div>
 
-        {/* Price */}
-        <div className="flex items-center justify-between">
+        {/* Spacer to push price to bottom */}
+        <div className="flex-grow"></div>
+
+        {/* Price & Button - Fixed at bottom */}
+        <div className="flex items-center justify-between pt-2 border-t border-primary-100">
           <span className="text-xl font-bold text-amber-600">
             {formatCurrency(product.price)}
           </span>

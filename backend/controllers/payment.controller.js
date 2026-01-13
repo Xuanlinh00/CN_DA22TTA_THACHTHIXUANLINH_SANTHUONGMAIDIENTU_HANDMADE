@@ -90,6 +90,7 @@ const vnpayReturn = async (req, res) => {
       // Cập nhật trạng thái thanh toán thành công
       if (order.paymentStatus !== 'paid') {
           order.paymentStatus = 'paid';
+          order.status = 'confirmed'; // Cập nhật trạng thái đơn hàng thành confirmed (đã thanh toán, chưa giao)
           order.paymentMethod = 'VNPAY';
           order.vnpayData = {
             transactionNo: result.transactionNo,
@@ -155,6 +156,7 @@ const vnpayIPN = async (req, res) => {
 
     if (vnpParams.vnp_ResponseCode === '00') {
       order.paymentStatus = 'paid';
+      order.status = 'confirmed'; // Cập nhật trạng thái đơn hàng thành confirmed (đã thanh toán, chưa giao)
       order.paymentMethod = 'VNPAY';
       order.vnpayData = {
         transactionNo: vnpParams.vnp_TransactionNo,

@@ -1,9 +1,13 @@
 const Shop = require('../models/shop.model.js');
 const User = require('../models/user.model.js');
 const Order = require('../models/order.model.js');
-const { validationResult } = require('express-validator'); // Cài npm i express-validator
-// quản lý shop
-// Lấy tất cả shop đang chờ duyệt
+// ✅ Sửa: Xóa validationResult không được sử dụng
+
+// ========== QUẢN LÝ CỬA HÀNG (ADMIN) ==========
+
+/**
+ * Lấy danh sách cửa hàng đang chờ duyệt
+ */
 const getPendingShops = async (req, res) => {
   try {
     const shops = await Shop.find({ status: 'pending' })
@@ -15,6 +19,11 @@ const getPendingShops = async (req, res) => {
 };
 
 // Duyệt hoặc từ chối shop
+/**
+ * Duyệt hoặc từ chối cửa hàng
+ * - Cập nhật trạng thái shop
+ * - Lưu thông tin admin duyệt
+ */
 const approveShop = async (req, res) => {
   try {
     const shop = await Shop.findById(req.params.id);
@@ -43,6 +52,12 @@ const approveShop = async (req, res) => {
 };
 
 // Lấy tất cả shop (có phân trang)
+/**
+ * Lấy danh sách tất cả cửa hàng
+ * - Hỗ trợ lọc theo trạng thái
+ * - Tính hoa hồng cho mỗi shop
+ * - Phân trang
+ */
 const getAllShops = async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;
@@ -56,11 +71,44 @@ const getAllShops = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit);
 
+    // Tính hoa hồng cho mỗi shop từ các đơn hàng đã giao
+    const shopsWithCommission = await Promise.all(shops.map(async (shop) => {
+      const orders = await Order.find({
+        status: 'delivered',
+        'items.shop': shop._id
+      });
+
+      // Tính tổng hoa hồng phải trả
+      let totalCommissionOwed = 0;
+      orders.forEach(order => {
+        const shopItems = order.items.filter(item => item.shop.toString() === shop._id.toString());
+        if (shopItems.length > 0) {
+          const shopSubtotal = shopItems.reduce((sum, item) => sum + item.subtotal, 0);
+          totalCommissionOwed += shopSubtotal * 0.05; // 5% commission
+        }
+      });
+
+      const shopObj = shop.toObject();
+      shopObj.totalCommission = totalCommissionOwed;
+      
+      // Cập nhật trạng thái dựa trên paidCommission
+      const remaining = totalCommissionOwed - (shop.paidCommission || 0);
+      if (remaining <= 0) {
+        shopObj.commissionStatus = 'paid';
+      } else if (shop.paidCommission > 0) {
+        shopObj.commissionStatus = 'partial';
+      } else {
+        shopObj.commissionStatus = 'unpaid';
+      }
+
+      return shopObj;
+    }));
+
     const total = await Shop.countDocuments(query);
 
     res.status(200).json({
       success: true,
-      data: shops,
+      data: shopsWithCommission,
       pagination: { page, limit, total },
     });
   } catch (error) {
@@ -69,6 +117,9 @@ const getAllShops = async (req, res) => {
 };
 
 // Xoá shop
+/**
+ * Xóa cửa hàng
+ */
 const deleteShop = async (req, res) => {
   try {
     const shop = await Shop.findByIdAndDelete(req.params.id);
@@ -81,8 +132,11 @@ const deleteShop = async (req, res) => {
   }
 };
 
-// quaen lý user
+// ========== QUẢN LÝ NGƯỜI DÙNG (ADMIN) ==========
 
+/**
+ * Lấy danh sách tất cả người dùng
+ */
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select('-password');
@@ -92,6 +146,9 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+/**
+ * Xóa người dùng
+ */
 const deleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
@@ -104,6 +161,10 @@ const deleteUser = async (req, res) => {
   }
 };
 
+/**
+ * Cập nhật vai trò người dùng
+ * - Thay đổi role: user, shop_owner, admin
+ */
 const updateUserRole = async (req, res) => {
   try {
     const { role } = req.body;
@@ -129,7 +190,14 @@ const updateUserRole = async (req, res) => {
   }
 };
 
+// ========== THỐNG KÊ HỎA HỒNG (ADMIN) ==========
+
 // Tính hoa hồng (commission) cho admin - theo % doanh thu của shop
+/**
+ * Tính hoa hồng từ các shop
+ * - Tính 5% từ doanh thu của mỗi shop
+ * - Chỉ tính từ đơn hàng đã giao
+ */
 const calculateCommission = async (req, res) => {
   try {
     // Lấy tất cả đơn hàng đã hoàn thành
@@ -179,6 +247,9 @@ const calculateCommission = async (req, res) => {
   }
 };
 
+/**
+ * Lấy thống kê doanh thu tổng quát
+ */
 const getRevenueStats = async (req, res) => {
   try {
     const completedOrders = await Order.find({ status: 'delivered' });
@@ -200,14 +271,18 @@ const getRevenueStats = async (req, res) => {
   }
 };
 
+/**
+ * Lấy thống kê trạng thái đơn hàng
+ */
 const getOrderStats = async (req, res) => {
   try {
-    const statuses = ['pending_payment', 'processing', 'shipped', 'completed', 'cancelled'];
-    const stats = {};
-
-    for (const status of statuses) {
-      stats[status] = await Order.countDocuments({ orderStatus: status });
-    }
+    const stats = {
+      pending_payment: await Order.countDocuments({ status: 'pending' }),
+      processing: await Order.countDocuments({ status: 'confirmed' }),
+      shipped: await Order.countDocuments({ status: 'shipping' }),
+      completed: await Order.countDocuments({ status: 'delivered' }),
+      cancelled: await Order.countDocuments({ status: 'cancelled' })
+    };
 
     res.status(200).json({ success: true, data: stats });
   } catch (error) {
@@ -215,13 +290,31 @@ const getOrderStats = async (req, res) => {
   }
 };
 
+/**
+ * Lấy danh sách tất cả đơn hàng
+ */
+const getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, data: orders });
+  } catch (error) {
+    console.error('❌ Error getting all orders:', error);
+    res.status(500).json({ success: false, message: 'Không thể lấy danh sách đơn hàng: ' + error.message });
+  }
+};
+
+/**
+ * Lấy doanh thu theo tháng
+ * - Hỗ trợ lọc theo năm
+ */
 const getMonthlyRevenue = async (req, res) => {
   try {
     const year = Number(req.query.year) || new Date().getFullYear();
     const monthlyData = [];
 
     for (let month = 0; month < 12; month++) {
-      const startDate = new Date(year, month, 1);
+      const startDate = new Date(year, month, 1, 0, 0, 0);
       const endDate = new Date(year, month + 1, 0, 23, 59, 59);
 
       const orders = await Order.find({
@@ -229,7 +322,7 @@ const getMonthlyRevenue = async (req, res) => {
         createdAt: { $gte: startDate, $lte: endDate }
       });
 
-      const revenue = orders.reduce((sum, order) => sum + order.subtotal, 0);
+      const revenue = orders.reduce((sum, order) => sum + (order.subtotal || 0), 0);
       const commission = orders.reduce((sum, order) => sum + (order.commissionAmount || 0), 0);
       
       monthlyData.push({
@@ -246,6 +339,87 @@ const getMonthlyRevenue = async (req, res) => {
   }
 };
 
+/**
+ * Lấy doanh thu theo ngày
+ * - Hỗ trợ lọc theo tháng/năm
+ */
+const getDailyRevenue = async (req, res) => {
+  try {
+    const year = Number(req.query.year) || new Date().getFullYear();
+    const month = Number(req.query.month) || new Date().getMonth();
+    
+    const startDate = new Date(year, month, 1, 0, 0, 0);
+    const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+    
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const dailyData = [];
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayStart = new Date(year, month, day, 0, 0, 0);
+      const dayEnd = new Date(year, month, day, 23, 59, 59);
+
+      const orders = await Order.find({
+        status: 'delivered',
+        createdAt: { $gte: dayStart, $lte: dayEnd }
+      });
+
+      const revenue = orders.reduce((sum, order) => sum + (order.subtotal || 0), 0);
+      const commission = orders.reduce((sum, order) => sum + (order.commissionAmount || 0), 0);
+      
+      dailyData.push({
+        day: day,
+        revenue: revenue,
+        commission: commission,
+        orders: orders.length
+      });
+    }
+
+    res.status(200).json({ success: true, data: dailyData });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Không thể thống kê doanh thu theo ngày: ' + error.message });
+  }
+};
+
+/**
+ * Lấy top 10 sản phẩm bán chạy nhất
+ */
+const getTopSellingProducts = async (req, res) => {
+  try {
+    // Lấy tất cả orders đã giao thành công
+    const orders = await Order.find({ status: 'delivered' });
+
+    // Tính toán sản phẩm bán chạy
+    const productStats = {};
+    
+    orders.forEach(order => {
+      order.items?.forEach(item => {
+        const productId = item.product?._id || item.product;
+        if (!productStats[productId]) {
+          productStats[productId] = {
+            productId,
+            name: item.name,
+            image: item.image,
+            quantity: 0,
+            revenue: 0,
+            price: item.price
+          };
+        }
+        productStats[productId].quantity += item.quantity;
+        productStats[productId].revenue += item.subtotal;
+      });
+    });
+
+    const topProducts = Object.values(productStats)
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 10);
+
+    res.status(200).json({ success: true, data: topProducts });
+  } catch (error) {
+    console.error('❌ Error getting top selling products:', error);
+    res.status(500).json({ success: false, message: 'Không thể lấy sản phẩm bán chạy: ' + error.message });
+  }
+};
+
 module.exports = {
   // Shop
   getPendingShops,
@@ -256,9 +430,13 @@ module.exports = {
   getAllUsers,
   deleteUser,
   updateUserRole,
+  // Orders
+  getAllOrders,
   // Stats
   getRevenueStats,
   getOrderStats,
   getMonthlyRevenue,
-calculateCommission,
+  getDailyRevenue,
+  getTopSellingProducts,
+  calculateCommission,
 };

@@ -8,6 +8,7 @@ import Loading from '../../components/common/Loading';
 import ShopLayout from '../../components/layout/ShopLayout';
 import FloatingChat from '../../components/common/FloatingChat';
 import ShopRevenueChart from '../../components/shop/ShopRevenueChart';
+import ShopTopSellingProducts from '../../components/shop/ShopTopSellingProducts';
 
 const ShopDashboard = () => {
   const { data: shopData, isLoading: shopLoading } = useQuery({
@@ -146,6 +147,9 @@ const ShopDashboard = () => {
 
         {/* Revenue Chart */}
         <ShopRevenueChart />
+
+        {/* Top Selling Products */}
+        <ShopTopSellingProducts />
       </div>
 
       <FloatingChat />
